@@ -5,6 +5,7 @@ node_modules/
 
 # Expo
 .expo/
+.expo-shared/
 dist/
 web-build/
 expo-env.d.ts
@@ -32,10 +33,42 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env
 
 # typescript
 *.tsbuildinfo
 
 # generated native folders
 /ios
-/android
+
+# Android build artifacts (keep android folder but ignore builds)
+android/app/build/
+android/build/
+android/.gradle/
+android/app/release/
+android/app/debug/
+*.apk
+*.aab
+*.hprof
+.cxx/
+
+# Logs
+logs/
+*.log
+/tmp/
+
+# Temporary files
+*.swp
+*.swo
+*~
+.tmp/
+
+# Documentation (optional - uncomment to track these)
+# UPDATE_STATUS.md
+# BUILD_INFO.md
+# STATUS.txt
+# APK_REBUILD_STATUS.md
+
+# Testing
+coverage/
+.nyc_output
