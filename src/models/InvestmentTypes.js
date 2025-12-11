@@ -1,5 +1,5 @@
 // Investment Types Configuration
-// Defines all 17 supported investment types with their properties and display configurations
+// Defines all 23 supported investment types with their properties and display configurations
 
 export const INVESTMENT_TYPES = {
   PHYSICAL_GOLD: {
@@ -93,18 +93,25 @@ export const INVESTMENT_TYPES = {
     fields: [
       { name: 'principal', label: 'Principal Amount', type: 'number', required: true },
       { name: 'interestRate', label: 'Interest Rate (%)', type: 'number', required: true },
-      { name: 'tenure', label: 'Tenure (months)', type: 'number', required: true },
       { name: 'bankName', label: 'Bank Name', type: 'text', required: true },
       { name: 'startDate', label: 'Start Date', type: 'date', required: true },
       { name: 'maturityDate', label: 'Maturity Date', type: 'date', required: true },
       { name: 'notes', label: 'Notes', type: 'text', required: false }
     ],
-    displayFormat: (investment) => ({
-      quantity: `${investment.tenure} months`,
-      invested: investment.principal,
-      current: investment.principal * (1 + (investment.interestRate / 100) * (investment.tenure / 12)),
-      returns: (investment.principal * (1 + (investment.interestRate / 100) * (investment.tenure / 12))) - investment.principal
-    })
+    displayFormat: (investment) => {
+      // Calculate tenure in months from start and maturity dates
+      const start = new Date(investment.startDate);
+      const maturity = new Date(investment.maturityDate);
+      const tenureMonths = Math.round((maturity - start) / (1000 * 60 * 60 * 24 * 30.44));
+      const tenureYears = tenureMonths / 12;
+
+      return {
+        quantity: `${tenureMonths} months`,
+        invested: investment.principal,
+        current: investment.principal * (1 + (investment.interestRate / 100) * tenureYears),
+        returns: (investment.principal * (1 + (investment.interestRate / 100) * tenureYears)) - investment.principal
+      };
+    }
   },
 
   RECURRING_DEPOSIT: {
@@ -341,6 +348,196 @@ export const INVESTMENT_TYPES = {
       invested: investment.premiumAmount,
       current: investment.premiumAmount,
       returns: 0
+    })
+  },
+
+  POST_OFFICE_RD: {
+    id: 'POST_OFFICE_RD',
+    name: 'Post Office RD',
+    icon: 'mail',
+    color: '#D35400',
+    fields: [
+      { name: 'monthlyDeposit', label: 'Monthly Deposit', type: 'number', required: true },
+      { name: 'interestRate', label: 'Interest Rate (%)', type: 'number', required: true },
+      { name: 'tenure', label: 'Tenure (months)', type: 'number', required: true },
+      { name: 'startDate', label: 'Start Date', type: 'date', required: true },
+      { name: 'maturityDate', label: 'Maturity Date', type: 'date', required: true },
+      { name: 'accountNumber', label: 'Account Number', type: 'text', required: false },
+      { name: 'notes', label: 'Notes', type: 'text', required: false }
+    ],
+    displayFormat: (investment) => {
+      const totalDeposited = investment.monthlyDeposit * investment.tenure;
+      // Simple RD maturity calculation: M = P * n * (n+1) * (2n+1) / (6 * 12) * r/100 + P*n
+      const n = investment.tenure;
+      const P = investment.monthlyDeposit;
+      const r = investment.interestRate;
+      const interest = (P * n * (n + 1) * (2 * n + 1)) / (6 * 12) * (r / 100);
+      const maturityAmount = totalDeposited + interest;
+
+      return {
+        quantity: `${investment.tenure} months`,
+        invested: totalDeposited,
+        current: maturityAmount,
+        returns: interest
+      };
+    }
+  },
+
+  POST_OFFICE_SCSS: {
+    id: 'POST_OFFICE_SCSS',
+    name: 'Post Office SCSS',
+    icon: 'people',
+    color: '#EC7063',
+    fields: [
+      { name: 'principal', label: 'Principal Amount', type: 'number', required: true },
+      { name: 'interestRate', label: 'Interest Rate (%)', type: 'number', required: true },
+      { name: 'startDate', label: 'Start Date', type: 'date', required: true },
+      { name: 'maturityDate', label: 'Maturity Date', type: 'date', required: true },
+      { name: 'accountNumber', label: 'Account Number', type: 'text', required: false },
+      { name: 'notes', label: 'Notes', type: 'text', required: false }
+    ],
+    displayFormat: (investment) => {
+      const start = new Date(investment.startDate);
+      const maturity = new Date(investment.maturityDate);
+      const tenureYears = (maturity - start) / (1000 * 60 * 60 * 24 * 365.25);
+      const maturityAmount = investment.principal * (1 + (investment.interestRate / 100) * tenureYears);
+
+      return {
+        quantity: `${Math.round(tenureYears * 4)} quarters`,
+        invested: investment.principal,
+        current: maturityAmount,
+        returns: maturityAmount - investment.principal
+      };
+    }
+  },
+
+  POST_OFFICE_SAVINGS: {
+    id: 'POST_OFFICE_SAVINGS',
+    name: 'Post Office Savings Account',
+    icon: 'wallet',
+    color: '#F8B739',
+    fields: [
+      { name: 'balance', label: 'Current Balance', type: 'number', required: true },
+      { name: 'interestRate', label: 'Interest Rate (%)', type: 'number', required: true },
+      { name: 'accountNumber', label: 'Account Number', type: 'text', required: false },
+      { name: 'openingDate', label: 'Account Opening Date', type: 'date', required: true },
+      { name: 'notes', label: 'Notes', type: 'text', required: false }
+    ],
+    displayFormat: (investment) => ({
+      quantity: 'Savings Account',
+      invested: investment.balance,
+      current: investment.balance,
+      returns: 0
+    })
+  },
+
+  POST_OFFICE_MIS: {
+    id: 'POST_OFFICE_MIS',
+    name: 'Post Office MIS',
+    icon: 'calendar',
+    color: '#5DADE2',
+    fields: [
+      { name: 'principal', label: 'Principal Amount', type: 'number', required: true },
+      { name: 'interestRate', label: 'Interest Rate (%)', type: 'number', required: true },
+      { name: 'monthlyIncome', label: 'Monthly Income', type: 'number', required: true },
+      { name: 'startDate', label: 'Start Date', type: 'date', required: true },
+      { name: 'maturityDate', label: 'Maturity Date', type: 'date', required: true },
+      { name: 'accountNumber', label: 'Account Number', type: 'text', required: false },
+      { name: 'notes', label: 'Notes', type: 'text', required: false }
+    ],
+    displayFormat: (investment) => {
+      const start = new Date(investment.startDate);
+      const maturity = new Date(investment.maturityDate);
+      const tenureMonths = Math.round((maturity - start) / (1000 * 60 * 60 * 24 * 30.44));
+      const totalIncome = investment.monthlyIncome * tenureMonths;
+      const maturityAmount = investment.principal + totalIncome;
+
+      return {
+        quantity: `${tenureMonths} months`,
+        invested: investment.principal,
+        current: maturityAmount,
+        returns: totalIncome
+      };
+    }
+  },
+
+  POST_OFFICE_KVP: {
+    id: 'POST_OFFICE_KVP',
+    name: 'Post Office KVP',
+    icon: 'leaf',
+    color: '#58D68D',
+    fields: [
+      { name: 'principal', label: 'Principal Amount', type: 'number', required: true },
+      { name: 'interestRate', label: 'Interest Rate (%)', type: 'number', required: true },
+      { name: 'maturityAmount', label: 'Maturity Amount', type: 'number', required: true },
+      { name: 'purchaseDate', label: 'Purchase Date', type: 'date', required: true },
+      { name: 'maturityDate', label: 'Maturity Date', type: 'date', required: true },
+      { name: 'certificateNumber', label: 'Certificate Number', type: 'text', required: false },
+      { name: 'notes', label: 'Notes', type: 'text', required: false }
+    ],
+    displayFormat: (investment) => {
+      const start = new Date(investment.purchaseDate);
+      const maturity = new Date(investment.maturityDate);
+      const tenureYears = (maturity - start) / (1000 * 60 * 60 * 24 * 365.25);
+
+      return {
+        quantity: `${Math.round(tenureYears * 12)} months`,
+        invested: investment.principal,
+        current: investment.maturityAmount,
+        returns: investment.maturityAmount - investment.principal
+      };
+    }
+  },
+
+  POST_OFFICE_TD: {
+    id: 'POST_OFFICE_TD',
+    name: 'Post Office Time Deposit',
+    icon: 'time',
+    color: '#AF7AC5',
+    fields: [
+      { name: 'principal', label: 'Principal Amount', type: 'number', required: true },
+      { name: 'interestRate', label: 'Interest Rate (%)', type: 'number', required: true },
+      { name: 'tenure', label: 'Tenure (years)', type: 'number', required: true },
+      { name: 'startDate', label: 'Start Date', type: 'date', required: true },
+      { name: 'maturityDate', label: 'Maturity Date', type: 'date', required: true },
+      { name: 'accountNumber', label: 'Account Number', type: 'text', required: false },
+      { name: 'notes', label: 'Notes', type: 'text', required: false }
+    ],
+    displayFormat: (investment) => {
+      // Quarterly compounding
+      const n = 4; // quarters per year
+      const r = investment.interestRate / 100;
+      const t = investment.tenure;
+      const maturityAmount = investment.principal * Math.pow((1 + r / n), n * t);
+
+      return {
+        quantity: `${investment.tenure} years`,
+        invested: investment.principal,
+        current: maturityAmount,
+        returns: maturityAmount - investment.principal
+      };
+    }
+  },
+
+  POST_OFFICE_NSC: {
+    id: 'POST_OFFICE_NSC',
+    name: 'National Savings Certificate',
+    icon: 'ribbon',
+    color: '#85929E',
+    fields: [
+      { name: 'principal', label: 'Principal Amount', type: 'number', required: true },
+      { name: 'interestRate', label: 'Interest Rate (%)', type: 'number', required: true },
+      { name: 'maturityAmount', label: 'Maturity Amount', type: 'number', required: true },
+      { name: 'purchaseDate', label: 'Purchase Date', type: 'date', required: true },
+      { name: 'maturityDate', label: 'Maturity Date', type: 'date', required: true },
+      { name: 'certificateNumber', label: 'Certificate Number', type: 'text', required: false },
+      { name: 'notes', label: 'Notes', type: 'text', required: false }
+    ],
+    displayFormat: (investment) => ({
+      quantity: 'NSC Certificate',
+      invested: investment.principal,
+      current: investment.maturityAmount,
+      returns: investment.maturityAmount - investment.principal
     })
   },
 

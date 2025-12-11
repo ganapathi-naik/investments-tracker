@@ -81,16 +81,6 @@ def enableMinifyInReleaseBuilds = (findProperty('android.enableMinifyInReleaseBu
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
-/**
- * Hermes is the JavaScript engine used by React Native.
- * Enabling Hermes improves app performance and reduces app size.
- */
-def hermesEnabled = (findProperty('expo.jsEngine') ?: "hermes") == "hermes"
-project.ext.hermesEnabled = hermesEnabled
-project.ext.react = [
-    enableHermes: hermesEnabled
-]
-
 android {
     ndkVersion rootProject.ext.ndkVersion
 

@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { loadInvestments } from '../utils/storage';
+import { loadInvestments, loadSettings } from '../utils/storage';
 import {
   getInvestedAmount,
   getCurrentValue,
@@ -24,10 +24,15 @@ const PortfolioScreen = ({ navigation }) => {
   const [investments, setInvestments] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState('ALL');
+  const [usdToInrRate, setUsdToInrRate] = useState(83.0);
 
   const loadData = async () => {
-    const data = await loadInvestments();
+    const [data, settings] = await Promise.all([
+      loadInvestments(),
+      loadSettings()
+    ]);
     setInvestments(data);
+    setUsdToInrRate(settings.usdToInrRate);
   };
 
   useFocusEffect(
@@ -143,7 +148,7 @@ const PortfolioScreen = ({ navigation }) => {
               onPress={() => setFilter(typeId)}
             >
               <Text style={[styles.filterText, filter === typeId && styles.filterTextActive]}>
-                {type.name} ({count})
+                {type.name}
               </Text>
             </TouchableOpacity>
           );
@@ -159,10 +164,10 @@ const PortfolioScreen = ({ navigation }) => {
         {filteredInvestments.length > 0 ? (
           filteredInvestments.map((investment) => {
             const type = INVESTMENT_TYPES[investment.type];
-            const invested = getInvestedAmount(investment);
-            const current = getCurrentValue(investment);
-            const returns = getReturns(investment);
-            const returnsPercentage = getReturnsPercentage(investment);
+            const invested = getInvestedAmount(investment, usdToInrRate);
+            const current = getCurrentValue(investment, usdToInrRate);
+            const returns = getReturns(investment, usdToInrRate);
+            const returnsPercentage = getReturnsPercentage(investment, usdToInrRate);
 
             return (
               <TouchableOpacity
@@ -275,11 +280,10 @@ const styles = StyleSheet.create({
   },
   filterText: {
     fontSize: 14,
-    color: '#666'
+    color: '#333'
   },
   filterTextActive: {
-    color: '#fff',
-    fontWeight: '600'
+    color: '#fff'
   },
   scrollView: {
     flex: 1

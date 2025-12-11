@@ -17,6 +17,12 @@ const AddInvestmentScreen = ({ navigation }) => {
   const [formData, setFormData] = useState({});
 
   const handleTypeSelect = (typeId) => {
+    // Navigate to dedicated screen for Post Office RD
+    if (typeId === 'POST_OFFICE_RD') {
+      navigation.navigate('AddPostOfficeRD');
+      return;
+    }
+
     setSelectedType(typeId);
     setFormData({});
   };
@@ -78,7 +84,9 @@ const AddInvestmentScreen = ({ navigation }) => {
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Select Investment Type</Text>
       <ScrollView style={styles.typeGrid}>
-        {Object.entries(INVESTMENT_TYPES).map(([typeId, type]) => (
+        {Object.entries(INVESTMENT_TYPES)
+          .sort(([, typeA], [, typeB]) => typeA.name.localeCompare(typeB.name))
+          .map(([typeId, type]) => (
           <TouchableOpacity
             key={typeId}
             style={[

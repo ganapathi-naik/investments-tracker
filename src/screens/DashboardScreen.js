@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { loadInvestments } from '../utils/storage';
+import { loadInvestments, loadSettings } from '../utils/storage';
 import {
   calculateTotalInvested,
   calculateTotalCurrentValue,
@@ -25,6 +25,7 @@ import { INVESTMENT_TYPES } from '../models/InvestmentTypes';
 const DashboardScreen = ({ navigation }) => {
   const [investments, setInvestments] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [usdToInrRate, setUsdToInrRate] = useState(83.0);
   const [stats, setStats] = useState({
     totalInvested: 0,
     currentValue: 0,
@@ -33,14 +34,19 @@ const DashboardScreen = ({ navigation }) => {
   });
 
   const loadData = async () => {
-    const data = await loadInvestments();
-    setInvestments(data);
+    const [data, settings] = await Promise.all([
+      loadInvestments(),
+      loadSettings()
+    ]);
 
-    // Calculate stats
-    const totalInvested = calculateTotalInvested(data);
-    const currentValue = calculateTotalCurrentValue(data);
-    const totalReturns = calculateTotalReturns(data);
-    const returnsPercentage = calculateReturnsPercentage(data);
+    setInvestments(data);
+    setUsdToInrRate(settings.usdToInrRate);
+
+    // Calculate stats with exchange rate
+    const totalInvested = calculateTotalInvested(data, settings.usdToInrRate);
+    const currentValue = calculateTotalCurrentValue(data, settings.usdToInrRate);
+    const totalReturns = calculateTotalReturns(data, settings.usdToInrRate);
+    const returnsPercentage = calculateReturnsPercentage(data, settings.usdToInrRate);
 
     setStats({
       totalInvested,
@@ -62,12 +68,26 @@ const DashboardScreen = ({ navigation }) => {
     setRefreshing(false);
   };
 
-  const portfolioAllocation = calculatePortfolioAllocation(investments);
+  const portfolioAllocation = calculatePortfolioAllocation(investments, usdToInrRate);
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Investment Tracker</Text>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => navigation.navigate('AddInvestment')}
+          >
+            <Ionicons name="add-circle-outline" size={24} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => navigation.navigate('Settings')}
+          >
+            <Ionicons name="settings-outline" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -179,12 +199,23 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#4A90E2',
     padding: 20,
-    paddingTop: 50
+    paddingTop: 50,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center'
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#fff'
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8
+  },
+  headerButton: {
+    padding: 8
   },
   scrollView: {
     flex: 1

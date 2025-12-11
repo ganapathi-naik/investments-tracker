@@ -11,6 +11,8 @@ import ReportsScreen from '../screens/ReportsScreen';
 import AddInvestmentScreen from '../screens/AddInvestmentScreen';
 import InvestmentDetailScreen from '../screens/InvestmentDetailScreen';
 import EditInvestmentScreen from '../screens/EditInvestmentScreen';
+import AddPostOfficeRDScreen from '../screens/AddPostOfficeRDScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -79,6 +81,16 @@ const AppNavigator = () => {
           name="EditInvestment"
           component={EditInvestmentScreen}
           options={{ title: 'Edit Investment' }}
+        />
+        <Stack.Screen
+          name="AddPostOfficeRD"
+          component={AddPostOfficeRDScreen}
+          options={{ title: 'Add Post Office RD' }}
+        />
+        <Stack.Screen
+          name="Settings"
+          component={SettingsScreen}
+          options={{ headerShown: false }}
         />
       </Stack.Navigator>
     </NavigationContainer>

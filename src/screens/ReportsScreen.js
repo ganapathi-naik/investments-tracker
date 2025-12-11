@@ -5,10 +5,12 @@ import {
   StyleSheet,
   ScrollView,
   RefreshControl,
-  Dimensions
+  Dimensions,
+  TouchableOpacity,
+  TextInput
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { loadInvestments } from '../utils/storage';
+import { loadInvestments, loadSettings } from '../utils/storage';
 import {
   groupInvestmentsByType,
   calculateTotalInvested,
@@ -25,19 +27,26 @@ const ReportsScreen = () => {
   const [investments, setInvestments] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [reportData, setReportData] = useState([]);
+  const [usdToInrRate, setUsdToInrRate] = useState(83.0);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const [yearlyReturns, setYearlyReturns] = useState(0);
 
   const loadData = async () => {
-    const data = await loadInvestments();
+    const [data, settings] = await Promise.all([
+      loadInvestments(),
+      loadSettings()
+    ]);
     setInvestments(data);
+    setUsdToInrRate(settings.usdToInrRate);
 
     // Generate report data by investment type
     const grouped = groupInvestmentsByType(data);
-    const totalCurrentValue = calculateTotalCurrentValue(data);
+    const totalCurrentValue = calculateTotalCurrentValue(data, settings.usdToInrRate);
 
     const reports = Object.entries(grouped).map(([typeId, typeInvestments]) => {
-      const invested = calculateTotalInvested(typeInvestments);
-      const current = calculateTotalCurrentValue(typeInvestments);
-      const returns = calculateTotalReturns(typeInvestments);
+      const invested = calculateTotalInvested(typeInvestments, settings.usdToInrRate);
+      const current = calculateTotalCurrentValue(typeInvestments, settings.usdToInrRate);
+      const returns = calculateTotalReturns(typeInvestments, settings.usdToInrRate);
       const returnsPercentage = invested > 0 ? ((returns / invested) * 100) : 0;
       const allocationPercentage = totalCurrentValue > 0 ? ((current / totalCurrentValue) * 100) : 0;
 
@@ -71,9 +80,9 @@ const ReportsScreen = () => {
     setRefreshing(false);
   };
 
-  const totalInvested = calculateTotalInvested(investments);
-  const totalCurrent = calculateTotalCurrentValue(investments);
-  const totalReturns = calculateTotalReturns(investments);
+  const totalInvested = calculateTotalInvested(investments, usdToInrRate);
+  const totalCurrent = calculateTotalCurrentValue(investments, usdToInrRate);
+  const totalReturns = calculateTotalReturns(investments, usdToInrRate);
   const totalReturnsPercentage = totalInvested > 0 ? ((totalReturns / totalInvested) * 100) : 0;
 
   // Helper function to get investment details for display (fixing Physical Gold bug)
@@ -133,6 +142,205 @@ const ReportsScreen = () => {
     return { name, quantity };
   };
 
+  // Calculate returns for a specific year based on interest-bearing investments
+  const calculateYearlyReturns = (year) => {
+    const yearNum = parseInt(year);
+    if (isNaN(yearNum)) return 0;
+
+    const yearStart = new Date(yearNum, 0, 1);
+    const yearEnd = new Date(yearNum, 11, 31);
+    let totalYearlyReturns = 0;
+
+    investments.forEach(investment => {
+      const interestRate = investment.interestRate || 0;
+
+      // Only calculate for interest-bearing investment types
+      if (!['EPF', 'PPF', 'FIXED_DEPOSIT', 'RECURRING_DEPOSIT', 'NPS',
+           'POST_OFFICE_SCSS', 'POST_OFFICE_SAVINGS', 'POST_OFFICE_MIS',
+           'POST_OFFICE_KVP', 'POST_OFFICE_TD', 'POST_OFFICE_NSC',
+           'POST_OFFICE_RD', 'BONDS', 'SGB'].includes(investment.type)) {
+        return;
+      }
+
+      let yearlyInterest = 0;
+      let isActiveInYear = false;
+
+      switch (investment.type) {
+        case 'EPF':
+        case 'PPF':
+        case 'NPS':
+          // Check if investment existed in this year
+          // Investment must have started before/during the year AND have evidence of being active
+          if (investment.startDate && investment.lastUpdated) {
+            const startDate = new Date(investment.startDate);
+            const lastUpdate = new Date(investment.lastUpdated);
+
+            // Investment is active in the year if:
+            // 1. It started on or before the year end
+            // 2. It was last updated on or after the year start (proving it was active during/after the year)
+            if (startDate <= yearEnd && lastUpdate >= yearStart) {
+              isActiveInYear = true;
+              yearlyInterest = (investment.balance || 0) * (interestRate / 100);
+            }
+          }
+          break;
+
+        case 'POST_OFFICE_SAVINGS':
+          // Check if account was active in this year
+          // Account must be opened before/during the year AND have evidence of being active
+          if (investment.openingDate && investment.lastUpdated) {
+            const opening = new Date(investment.openingDate);
+            const lastUpdate = new Date(investment.lastUpdated);
+
+            // Account is active in the year if:
+            // 1. It was opened on or before the year end
+            // 2. It was last updated on or after the year start (proving it was active during/after the year)
+            if (opening <= yearEnd && lastUpdate >= yearStart) {
+              isActiveInYear = true;
+              yearlyInterest = (investment.balance || 0) * (interestRate / 100);
+            }
+          }
+          break;
+
+        case 'FIXED_DEPOSIT':
+        case 'POST_OFFICE_TD':
+          // Check if FD was active during the year
+          if (investment.startDate && investment.maturityDate) {
+            const fdStart = new Date(investment.startDate);
+            const fdMaturity = new Date(investment.maturityDate);
+
+            if (fdStart <= yearEnd && fdMaturity >= yearStart) {
+              isActiveInYear = true;
+              yearlyInterest = (investment.principal || 0) * (interestRate / 100);
+            }
+          }
+          break;
+
+        case 'RECURRING_DEPOSIT':
+        case 'POST_OFFICE_RD':
+          // Check if RD was active during the year
+          if (investment.startDate && investment.maturityDate) {
+            const rdStart = new Date(investment.startDate);
+            const rdMaturity = new Date(investment.maturityDate);
+
+            if (rdStart <= yearEnd && rdMaturity >= yearStart) {
+              isActiveInYear = true;
+              // Calculate interest on average balance for the year
+              const rdMonthly = investment.monthlyDeposit || 0;
+              const avgMonths = 6; // Average months in the year
+              yearlyInterest = (rdMonthly * avgMonths) * (interestRate / 100);
+            }
+          }
+          break;
+
+        case 'POST_OFFICE_SCSS':
+          // SCSS pays quarterly interest
+          if (investment.startDate && investment.maturityDate) {
+            const scssStart = new Date(investment.startDate);
+            const scssMaturity = new Date(investment.maturityDate);
+
+            if (scssStart <= yearEnd && scssMaturity >= yearStart) {
+              isActiveInYear = true;
+              yearlyInterest = (investment.principal || 0) * (interestRate / 100);
+            }
+          }
+          break;
+
+        case 'POST_OFFICE_MIS':
+          // MIS pays monthly income
+          if (investment.startDate && investment.maturityDate) {
+            const misStart = new Date(investment.startDate);
+            const misMaturity = new Date(investment.maturityDate);
+
+            if (misStart <= yearEnd && misMaturity >= yearStart) {
+              isActiveInYear = true;
+              // Count actual months active in this year
+              const activeStart = misStart > yearStart ? misStart : yearStart;
+              const activeEnd = misMaturity < yearEnd ? misMaturity : yearEnd;
+              const monthsActive = Math.round((activeEnd - activeStart) / (1000 * 60 * 60 * 24 * 30.44));
+              yearlyInterest = (investment.monthlyIncome || 0) * Math.min(monthsActive, 12);
+            }
+          }
+          break;
+
+        case 'POST_OFFICE_KVP':
+        case 'POST_OFFICE_NSC':
+          // These have fixed maturity, calculate proportional interest
+          if (investment.purchaseDate && investment.maturityDate && investment.maturityAmount && investment.principal) {
+            const kvpStart = new Date(investment.purchaseDate);
+            const kvpMaturity = new Date(investment.maturityDate);
+
+            if (kvpStart <= yearEnd && kvpMaturity >= yearStart) {
+              isActiveInYear = true;
+              const totalReturns = (investment.maturityAmount || 0) - (investment.principal || 0);
+              const totalYears = (kvpMaturity - kvpStart) / (1000 * 60 * 60 * 24 * 365.25);
+              if (totalYears > 0) {
+                yearlyInterest = totalReturns / totalYears;
+              }
+            }
+          }
+          break;
+
+        case 'BONDS':
+          // Coupon payment - check if bond was held in this year
+          if (investment.issueDate && investment.maturityDate) {
+            const bondIssue = new Date(investment.issueDate);
+            const bondMaturity = new Date(investment.maturityDate);
+
+            if (bondIssue <= yearEnd && bondMaturity >= yearStart) {
+              isActiveInYear = true;
+              yearlyInterest = (investment.faceValue || 0) * ((investment.couponRate || 0) / 100);
+            }
+          }
+          break;
+
+        case 'SGB':
+          // SGB interest - check if SGB was held in this year
+          if (investment.purchaseDate && investment.maturityDate) {
+            const sgbPurchase = new Date(investment.purchaseDate);
+            const sgbMaturity = new Date(investment.maturityDate);
+
+            if (sgbPurchase <= yearEnd && sgbMaturity >= yearStart) {
+              isActiveInYear = true;
+              yearlyInterest = (investment.units || 0) * (investment.issuePrice || 0) * (interestRate / 100);
+            }
+          }
+          break;
+      }
+
+      if (isActiveInYear) {
+        totalYearlyReturns += yearlyInterest;
+      }
+    });
+
+    return totalYearlyReturns;
+  };
+
+  // Update yearly returns when year or investments change
+  const handleYearChange = (year) => {
+    setSelectedYear(year);
+    // Only calculate if year is valid (4 digits and reasonable range)
+    if (year.length === 4 && !isNaN(year)) {
+      const yearNum = parseInt(year);
+      if (yearNum >= 1900 && yearNum <= 2100) {
+        const returns = calculateYearlyReturns(year);
+        setYearlyReturns(returns);
+      } else {
+        setYearlyReturns(0);
+      }
+    } else {
+      setYearlyReturns(0);
+    }
+  };
+
+  // Calculate initial yearly returns
+  useFocusEffect(
+    useCallback(() => {
+      const returns = calculateYearlyReturns(selectedYear);
+      setYearlyReturns(returns);
+    }, [investments, selectedYear])
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -165,6 +373,39 @@ const ReportsScreen = () => {
               {formatINR(totalReturns)} ({formatPercentage(totalReturnsPercentage)})
             </Text>
           </View>
+        </View>
+
+        {/* Yearly Interest/Returns Card */}
+        <View style={styles.summaryCard}>
+          <Text style={styles.summaryTitle}>Yearly Interest Earned</Text>
+          <View style={styles.yearInputContainer}>
+            <Text style={styles.yearLabel}>Select Year:</Text>
+            <TextInput
+              style={styles.yearInput}
+              value={selectedYear}
+              onChangeText={handleYearChange}
+              keyboardType="numeric"
+              maxLength={4}
+              placeholder="YYYY"
+            />
+          </View>
+          {selectedYear.length === 4 && !isNaN(selectedYear) && parseInt(selectedYear) >= 1900 && parseInt(selectedYear) <= 2100 ? (
+            <>
+              <View style={styles.yearlyReturnsRow}>
+                <Text style={styles.yearlyReturnsLabel}>Interest/Returns for {selectedYear}:</Text>
+                <Text style={[styles.yearlyReturnsValue, styles.positiveReturns]}>
+                  {formatINR(yearlyReturns)}
+                </Text>
+              </View>
+              <Text style={styles.yearlyReturnsNote}>
+                * Calculated for interest-bearing investments (EPF, PPF, FDs, Bonds, etc.)
+              </Text>
+            </>
+          ) : (
+            <Text style={styles.yearlyReturnsNote}>
+              Please enter a valid year (YYYY)
+            </Text>
+          )}
         </View>
 
         {/* Type-wise Reports */}
@@ -238,9 +479,9 @@ const ReportsScreen = () => {
               <Text style={styles.investmentListTitle}>Investments:</Text>
               {report.investments.map((investment) => {
                 const details = getInvestmentDetails(investment);
-                const invested = calculateTotalInvested([investment]);
-                const current = calculateTotalCurrentValue([investment]);
-                const returns = calculateTotalReturns([investment]);
+                const invested = calculateTotalInvested([investment], usdToInrRate);
+                const current = calculateTotalCurrentValue([investment], usdToInrRate);
+                const returns = calculateTotalReturns([investment], usdToInrRate);
 
                 return (
                   <View key={investment.id} style={styles.investmentItem}>
@@ -323,6 +564,44 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#333'
+  },
+  yearInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+    marginTop: 5
+  },
+  yearLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginRight: 10
+  },
+  yearInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 16,
+    width: 100,
+    backgroundColor: '#fff'
+  },
+  yearlyReturnsRow: {
+    marginBottom: 10
+  },
+  yearlyReturnsLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 5
+  },
+  yearlyReturnsValue: {
+    fontSize: 24,
+    fontWeight: 'bold'
+  },
+  yearlyReturnsNote: {
+    fontSize: 11,
+    color: '#999',
+    fontStyle: 'italic',
+    marginTop: 5
   },
   reportCard: {
     backgroundColor: '#fff',
