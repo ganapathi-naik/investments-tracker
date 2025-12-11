@@ -12,6 +12,7 @@ import AddInvestmentScreen from '../screens/AddInvestmentScreen';
 import InvestmentDetailScreen from '../screens/InvestmentDetailScreen';
 import EditInvestmentScreen from '../screens/EditInvestmentScreen';
 import AddPostOfficeRDScreen from '../screens/AddPostOfficeRDScreen';
+import AddInvestmentFormScreen from '../screens/AddInvestmentFormScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 
 const Tab = createBottomTabNavigator();
@@ -86,6 +87,13 @@ const AppNavigator = () => {
           name="AddPostOfficeRD"
           component={AddPostOfficeRDScreen}
           options={{ title: 'Add Post Office RD' }}
+        />
+        <Stack.Screen
+          name="AddInvestmentForm"
+          component={AddInvestmentFormScreen}
+          options={({ route }) => ({
+            title: `Add ${route.params?.investmentType ? 'Investment' : 'Investment'}`
+          })}
         />
         <Stack.Screen
           name="Settings"

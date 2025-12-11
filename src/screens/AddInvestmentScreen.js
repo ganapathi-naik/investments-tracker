@@ -11,20 +11,15 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { addInvestment } from '../utils/storage';
 import { INVESTMENT_TYPES } from '../models/InvestmentTypes';
+import { scheduleMaturityNotifications } from '../services/notificationService';
 
 const AddInvestmentScreen = ({ navigation }) => {
   const [selectedType, setSelectedType] = useState(null);
   const [formData, setFormData] = useState({});
 
   const handleTypeSelect = (typeId) => {
-    // Navigate to dedicated screen for Post Office RD
-    if (typeId === 'POST_OFFICE_RD') {
-      navigation.navigate('AddPostOfficeRD');
-      return;
-    }
-
-    setSelectedType(typeId);
-    setFormData({});
+    // Navigate to dedicated full-screen form for all investment types
+    navigation.navigate('AddInvestmentForm', { investmentType: typeId });
   };
 
   const handleInputChange = (fieldName, value) => {
@@ -72,6 +67,9 @@ const AddInvestmentScreen = ({ navigation }) => {
     const result = await addInvestment(investment);
 
     if (result) {
+      // Reschedule maturity notifications after adding investment
+      await scheduleMaturityNotifications();
+
       Alert.alert('Success', 'Investment added successfully', [
         { text: 'OK', onPress: () => navigation.goBack() }
       ]);

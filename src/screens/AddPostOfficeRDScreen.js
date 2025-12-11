@@ -145,7 +145,10 @@ const AddPostOfficeRDScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollView}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
+      >
         <View style={styles.section}>
           <View style={styles.header}>
             <Ionicons name="mail" size={32} color="#D35400" />
@@ -283,14 +286,14 @@ const AddPostOfficeRDScreen = ({ navigation }) => {
             </View>
           </View>
         )}
-
-        <View style={styles.section}>
-          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-            <Ionicons name="save" size={20} color="#fff" />
-            <Text style={styles.saveButtonText}>Save Post Office RD</Text>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
+
+      <View style={styles.saveButtonContainer}>
+        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+          <Ionicons name="save" size={20} color="#fff" />
+          <Text style={styles.saveButtonText}>Save Post Office RD</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -302,6 +305,9 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1
+  },
+  scrollViewContent: {
+    paddingBottom: 100
   },
   section: {
     backgroundColor: '#fff',
@@ -423,6 +429,22 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#27AE60',
     marginLeft: 5
+  },
+  saveButtonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#fff',
+    padding: 15,
+    paddingBottom: 30,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4
   },
   saveButton: {
     backgroundColor: '#D35400',

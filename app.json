@@ -21,8 +21,27 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.InvestmentTracker"
+      "package": "com.anonymous.InvestmentTracker",
+      "permissions": [
+        "NOTIFICATIONS",
+        "SCHEDULE_EXACT_ALARM"
+      ]
     },
+    "notification": {
+      "icon": "./assets/icon.png",
+      "color": "#4A90E2",
+      "androidMode": "default",
+      "androidCollapsedTitle": "Investment Tracker"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#4A90E2"
+        }
+      ]
+    ],
     "web": {
       "favicon": "./assets/favicon.png"
     }
