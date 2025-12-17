@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Import screens
 import DashboardScreen from '../screens/DashboardScreen';
@@ -14,12 +15,15 @@ import EditInvestmentScreen from '../screens/EditInvestmentScreen';
 import AddPostOfficeRDScreen from '../screens/AddPostOfficeRDScreen';
 import AddInvestmentFormScreen from '../screens/AddInvestmentFormScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import YearlyReturnsDebugScreen from '../screens/YearlyReturnsDebugScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
 // Tab Navigator for main screens
 const MainTabs = () => {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -38,7 +42,12 @@ const MainTabs = () => {
         },
         tabBarActiveTintColor: '#4A90E2',
         tabBarInactiveTintColor: 'gray',
-        headerShown: false
+        headerShown: false,
+        tabBarStyle: {
+          paddingBottom: insets.bottom + 8,
+          paddingTop: 8,
+          height: 70 + insets.bottom
+        }
       })}
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
@@ -98,6 +107,11 @@ const AppNavigator = () => {
         <Stack.Screen
           name="Settings"
           component={SettingsScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="YearlyReturnsDebug"
+          component={YearlyReturnsDebugScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { loadInvestments, loadSettings } from '../utils/storage';
 import {
   calculateTotalInvested,
@@ -73,10 +74,11 @@ const DashboardScreen = ({ navigation }) => {
   };
 
   const portfolioAllocation = calculatePortfolioAllocation(investments, usdToInrRate);
+  const insets = useSafeAreaInsets();
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <Text style={styles.headerTitle}>Investment Tracker</Text>
         <View style={styles.headerButtons}>
           <TouchableOpacity
@@ -96,6 +98,7 @@ const DashboardScreen = ({ navigation }) => {
 
       <ScrollView
         style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -223,6 +226,9 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1
+  },
+  scrollViewContent: {
+    paddingBottom: 20
   },
   summaryContainer: {
     flexDirection: 'row',

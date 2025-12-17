@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,27 +6,32 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert
+  Alert,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { addInvestment } from '../utils/storage';
 import { INVESTMENT_TYPES } from '../models/InvestmentTypes';
 import { scheduleMaturityNotifications } from '../services/notificationService';
 
 const AddInvestmentFormScreen = ({ navigation, route }) => {
   const { investmentType } = route.params;
-  const type = INVESTMENT_TYPES[investmentType];
+  const type = useMemo(() => INVESTMENT_TYPES[investmentType], [investmentType]);
+  const insets = useSafeAreaInsets();
 
   const [formData, setFormData] = useState({});
 
-  const handleInputChange = (fieldName, value) => {
-    setFormData({
-      ...formData,
+  const handleInputChange = useCallback((fieldName, value) => {
+    setFormData(prevData => ({
+      ...prevData,
       [fieldName]: value
-    });
-  };
+    }));
+  }, []);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     // Validate required fields
     const missingFields = type.fields
       .filter(field => field.required && !formData[field.name])
@@ -66,13 +71,18 @@ const AddInvestmentFormScreen = ({ navigation, route }) => {
     } else {
       Alert.alert('Error', 'Failed to add investment');
     }
-  };
+  }, [formData, investmentType, navigation, type]);
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={0}
+    >
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollViewContent}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.section}>
           <View style={styles.header}>
@@ -101,6 +111,7 @@ const AddInvestmentFormScreen = ({ navigation, route }) => {
                   value={formData[field.name] || ''}
                   onChangeText={(value) => handleInputChange(field.name, value)}
                   placeholder={`Enter ${field.label.toLowerCase()}`}
+                  placeholderTextColor="#999"
                   keyboardType={field.type === 'number' ? 'numeric' : 'default'}
                 />
               ) : field.type === 'date' ? (
@@ -109,20 +120,41 @@ const AddInvestmentFormScreen = ({ navigation, route }) => {
                   value={formData[field.name] || ''}
                   onChangeText={(value) => handleInputChange(field.name, value)}
                   placeholder="YYYY-MM-DD"
+                  placeholderTextColor="#999"
                 />
+              ) : field.type === 'select' ? (
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={formData[field.name] || field.options[0].value}
+                    onValueChange={(value) => handleInputChange(field.name, value)}
+                    style={styles.picker}
+                    dropdownIconColor="#333"
+                    mode="dropdown"
+                  >
+                    {field.options.map((option) => (
+                      <Picker.Item
+                        key={option.value}
+                        label={option.label}
+                        value={option.value}
+                        color="#000000"
+                        style={{ backgroundColor: '#FFFFFF' }}
+                      />
+                    ))}
+                  </Picker>
+                </View>
               ) : null}
             </View>
           ))}
         </View>
       </ScrollView>
 
-      <View style={styles.saveButtonContainer}>
+      <View style={[styles.saveButtonContainer, { paddingBottom: insets.bottom + 15 }]}>
         <TouchableOpacity style={[styles.saveButton, { backgroundColor: type.color }]} onPress={handleSave}>
           <Ionicons name="save" size={20} color="#fff" />
           <Text style={styles.saveButtonText}>Save Investment</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -198,6 +230,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: '#fff'
   },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    overflow: 'hidden',
+    justifyContent: 'center'
+  },
+  picker: {
+    height: 56,
+    color: '#333'
+  },
   saveButtonContainer: {
     position: 'absolute',
     bottom: 0,
@@ -205,7 +249,6 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: '#fff',
     padding: 15,
-    paddingBottom: 30,
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
     elevation: 5,

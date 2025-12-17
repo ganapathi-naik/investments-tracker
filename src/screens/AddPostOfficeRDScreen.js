@@ -6,12 +6,16 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert
+  Alert,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { addInvestment } from '../utils/storage';
 
 const AddPostOfficeRDScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const [formData, setFormData] = useState({
     monthlyDeposit: '',
     interestRate: '',
@@ -144,10 +148,15 @@ const AddPostOfficeRDScreen = ({ navigation }) => {
   const projectedReturns = calculateProjectedReturns();
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={0}
+    >
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollViewContent}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.section}>
           <View style={styles.header}>
@@ -171,6 +180,7 @@ const AddPostOfficeRDScreen = ({ navigation }) => {
               value={formData.monthlyDeposit}
               onChangeText={(value) => handleInputChange('monthlyDeposit', value)}
               placeholder="Enter monthly deposit amount"
+              placeholderTextColor="#999"
               keyboardType="numeric"
             />
           </View>
@@ -184,6 +194,7 @@ const AddPostOfficeRDScreen = ({ navigation }) => {
               value={formData.interestRate}
               onChangeText={(value) => handleInputChange('interestRate', value)}
               placeholder="Enter interest rate"
+              placeholderTextColor="#999"
               keyboardType="numeric"
             />
           </View>
@@ -197,6 +208,7 @@ const AddPostOfficeRDScreen = ({ navigation }) => {
               value={formData.tenure}
               onChangeText={(value) => handleInputChange('tenure', value)}
               placeholder="Enter tenure in months"
+              placeholderTextColor="#999"
               keyboardType="numeric"
             />
             <Text style={styles.fieldHint}>
@@ -213,6 +225,7 @@ const AddPostOfficeRDScreen = ({ navigation }) => {
               value={formData.startDate}
               onChangeText={(value) => handleInputChange('startDate', value)}
               placeholder="YYYY-MM-DD"
+              placeholderTextColor="#999"
             />
           </View>
 
@@ -225,6 +238,7 @@ const AddPostOfficeRDScreen = ({ navigation }) => {
               value={formData.maturityDate}
               onChangeText={(value) => handleInputChange('maturityDate', value)}
               placeholder="YYYY-MM-DD (auto-calculated)"
+              placeholderTextColor="#999"
               editable={true}
             />
             <Text style={styles.fieldHint}>
@@ -239,6 +253,7 @@ const AddPostOfficeRDScreen = ({ navigation }) => {
               value={formData.accountNumber}
               onChangeText={(value) => handleInputChange('accountNumber', value)}
               placeholder="Enter account number (optional)"
+              placeholderTextColor="#999"
             />
           </View>
 
@@ -249,6 +264,7 @@ const AddPostOfficeRDScreen = ({ navigation }) => {
               value={formData.notes}
               onChangeText={(value) => handleInputChange('notes', value)}
               placeholder="Add any notes (optional)"
+              placeholderTextColor="#999"
               multiline
               numberOfLines={4}
             />
@@ -288,13 +304,13 @@ const AddPostOfficeRDScreen = ({ navigation }) => {
         )}
       </ScrollView>
 
-      <View style={styles.saveButtonContainer}>
+      <View style={[styles.saveButtonContainer, { paddingBottom: insets.bottom + 15 }]}>
         <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
           <Ionicons name="save" size={20} color="#fff" />
           <Text style={styles.saveButtonText}>Save Post Office RD</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -437,7 +453,6 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: '#fff',
     padding: 15,
-    paddingBottom: 30,
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
     elevation: 5,

@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/tmp/portfolio_final.png)",
+      "Bash(/tmp/portfolio_view.png)",
+      "Bash(/tmp/portfolio_fresh.png)",
+      "Bash(/tmp/current_check.png)",
+      "Bash(npx expo start:*)",
+      "Bash(npx expo run:android:*)",
+      "Bash(/tmp/final_portfolio_check.png)",
+      "Bash(/opt/homebrew/opt/node@18/bin/npx expo export --platform android --clear)",
+      "Bash(export JAVA_HOME=/opt/homebrew/opt/openjdk@17:*)",
+      "Bash(./gradlew assembleRelease:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './src/navigation/AppNavigator';
 import { initializeNotifications } from './src/services/notificationService';
 
@@ -10,9 +11,9 @@ export default function App() {
   }, []);
 
   return (
-    <>
+    <SafeAreaProvider>
       <AppNavigator />
-      <StatusBar style="auto" />
-    </>
+      <StatusBar style="light" translucent backgroundColor="transparent" />
+    </SafeAreaProvider>
   );
 }

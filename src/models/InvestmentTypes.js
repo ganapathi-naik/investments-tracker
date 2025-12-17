@@ -8,6 +8,19 @@ export const INVESTMENT_TYPES = {
     icon: 'gold',
     color: '#FFD700',
     fields: [
+      { name: 'investmentName', label: 'Investment Name', type: 'text', required: false },
+      {
+        name: 'purity',
+        label: 'Purity',
+        type: 'select',
+        required: false,
+        options: [
+          { label: '24K (99.9%)', value: '24K' },
+          { label: '22K (91.6%)', value: '22K' },
+          { label: '18K (75%)', value: '18K' },
+          { label: '14K (58.5%)', value: '14K' }
+        ]
+      },
       { name: 'grams', label: 'Quantity (grams)', type: 'number', required: true },
       { name: 'buyPrice', label: 'Buy Price (per gram)', type: 'number', required: true },
       { name: 'currentPrice', label: 'Current Price (per gram)', type: 'number', required: true },
@@ -28,6 +41,7 @@ export const INVESTMENT_TYPES = {
     icon: 'certificate',
     color: '#DAA520',
     fields: [
+      { name: 'investmentName', label: 'Investment Name', type: 'text', required: false },
       { name: 'units', label: 'Number of Units', type: 'number', required: true },
       { name: 'issuePrice', label: 'Issue Price (per unit)', type: 'number', required: true },
       { name: 'currentPrice', label: 'Current Price (per unit)', type: 'number', required: true },
@@ -50,9 +64,22 @@ export const INVESTMENT_TYPES = {
     icon: 'briefcase',
     color: '#4A90E2',
     fields: [
+      { name: 'investmentName', label: 'Investment Name', type: 'text', required: false },
       { name: 'balance', label: 'Current Balance', type: 'number', required: true },
       { name: 'monthlyContribution', label: 'Monthly Contribution', type: 'number', required: true },
       { name: 'interestRate', label: 'Interest Rate (%)', type: 'number', required: true },
+      {
+        name: 'compoundingFrequency',
+        label: 'Compounding Frequency',
+        type: 'select',
+        required: false,
+        options: [
+          { label: 'Quarterly (Default)', value: 'quarterly' },
+          { label: 'Monthly', value: 'monthly' },
+          { label: 'Half-Yearly', value: 'half-yearly' },
+          { label: 'Yearly', value: 'yearly' }
+        ]
+      },
       { name: 'lastUpdated', label: 'Last Updated', type: 'date', required: true },
       { name: 'notes', label: 'Notes', type: 'text', required: false }
     ],
@@ -70,6 +97,7 @@ export const INVESTMENT_TYPES = {
     icon: 'piggy-bank',
     color: '#27AE60',
     fields: [
+      { name: 'investmentName', label: 'Investment Name', type: 'text', required: false },
       { name: 'balance', label: 'Current Balance', type: 'number', required: true },
       { name: 'yearlyContribution', label: 'Yearly Contribution', type: 'number', required: true },
       { name: 'interestRate', label: 'Interest Rate (%)', type: 'number', required: true },
@@ -91,8 +119,32 @@ export const INVESTMENT_TYPES = {
     icon: 'bank',
     color: '#E74C3C',
     fields: [
+      { name: 'investmentName', label: 'Investment Name', type: 'text', required: false },
       { name: 'principal', label: 'Principal Amount', type: 'number', required: true },
       { name: 'interestRate', label: 'Interest Rate (%)', type: 'number', required: true },
+      {
+        name: 'compoundingFrequency',
+        label: 'Compounding Frequency',
+        type: 'select',
+        required: false,
+        options: [
+          { label: 'Quarterly (Default)', value: 'quarterly' },
+          { label: 'Monthly', value: 'monthly' },
+          { label: 'Half-Yearly', value: 'half-yearly' },
+          { label: 'Yearly', value: 'yearly' },
+          { label: 'Simple Interest', value: 'simple' }
+        ]
+      },
+      {
+        name: 'interestPayoutType',
+        label: 'Interest Payout Type',
+        type: 'select',
+        required: false,
+        options: [
+          { label: 'Cumulative (Reinvested)', value: 'cumulative' },
+          { label: 'Non-Cumulative (Paid Out)', value: 'non-cumulative' }
+        ]
+      },
       { name: 'bankName', label: 'Bank Name', type: 'text', required: true },
       { name: 'startDate', label: 'Start Date', type: 'date', required: true },
       { name: 'maturityDate', label: 'Maturity Date', type: 'date', required: true },
@@ -120,8 +172,21 @@ export const INVESTMENT_TYPES = {
     icon: 'calendar-repeat',
     color: '#9B59B6',
     fields: [
+      { name: 'investmentName', label: 'Investment Name', type: 'text', required: false },
       { name: 'monthlyDeposit', label: 'Monthly Deposit', type: 'number', required: true },
       { name: 'interestRate', label: 'Interest Rate (%)', type: 'number', required: true },
+      {
+        name: 'compoundingFrequency',
+        label: 'Compounding Frequency',
+        type: 'select',
+        required: false,
+        options: [
+          { label: 'Quarterly (Default)', value: 'quarterly' },
+          { label: 'Monthly', value: 'monthly' },
+          { label: 'Half-Yearly', value: 'half-yearly' },
+          { label: 'Yearly', value: 'yearly' }
+        ]
+      },
       { name: 'tenure', label: 'Tenure (months)', type: 'number', required: true },
       { name: 'bankName', label: 'Bank Name', type: 'text', required: true },
       { name: 'startDate', label: 'Start Date', type: 'date', required: true },
@@ -250,6 +315,7 @@ export const INVESTMENT_TYPES = {
     icon: 'shield',
     color: '#8E44AD',
     fields: [
+      { name: 'investmentName', label: 'Investment Name', type: 'text', required: false },
       { name: 'balance', label: 'Current Balance', type: 'number', required: true },
       { name: 'monthlyContribution', label: 'Monthly Contribution', type: 'number', required: true },
       { name: 'pranNumber', label: 'PRAN Number', type: 'text', required: true },
@@ -357,8 +423,21 @@ export const INVESTMENT_TYPES = {
     icon: 'mail',
     color: '#D35400',
     fields: [
+      { name: 'investmentName', label: 'Investment Name', type: 'text', required: false },
       { name: 'monthlyDeposit', label: 'Monthly Deposit', type: 'number', required: true },
       { name: 'interestRate', label: 'Interest Rate (%)', type: 'number', required: true },
+      {
+        name: 'compoundingFrequency',
+        label: 'Compounding Frequency',
+        type: 'select',
+        required: false,
+        options: [
+          { label: 'Quarterly (Default)', value: 'quarterly' },
+          { label: 'Monthly', value: 'monthly' },
+          { label: 'Half-Yearly', value: 'half-yearly' },
+          { label: 'Yearly', value: 'yearly' }
+        ]
+      },
       { name: 'tenure', label: 'Tenure (months)', type: 'number', required: true },
       { name: 'startDate', label: 'Start Date', type: 'date', required: true },
       { name: 'maturityDate', label: 'Maturity Date', type: 'date', required: true },
@@ -389,8 +468,21 @@ export const INVESTMENT_TYPES = {
     icon: 'people',
     color: '#EC7063',
     fields: [
+      { name: 'investmentName', label: 'Investment Name', type: 'text', required: false },
       { name: 'principal', label: 'Principal Amount', type: 'number', required: true },
       { name: 'interestRate', label: 'Interest Rate (%)', type: 'number', required: true },
+      {
+        name: 'compoundingFrequency',
+        label: 'Interest Payment Frequency',
+        type: 'select',
+        required: false,
+        options: [
+          { label: 'Quarterly (Default)', value: 'quarterly' },
+          { label: 'Monthly', value: 'monthly' },
+          { label: 'Half-Yearly', value: 'half-yearly' },
+          { label: 'Yearly', value: 'yearly' }
+        ]
+      },
       { name: 'startDate', label: 'Start Date', type: 'date', required: true },
       { name: 'maturityDate', label: 'Maturity Date', type: 'date', required: true },
       { name: 'accountNumber', label: 'Account Number', type: 'text', required: false },
@@ -417,6 +509,7 @@ export const INVESTMENT_TYPES = {
     icon: 'wallet',
     color: '#F8B739',
     fields: [
+      { name: 'investmentName', label: 'Investment Name', type: 'text', required: false },
       { name: 'balance', label: 'Current Balance', type: 'number', required: true },
       { name: 'interestRate', label: 'Interest Rate (%)', type: 'number', required: true },
       { name: 'accountNumber', label: 'Account Number', type: 'text', required: false },
@@ -437,6 +530,7 @@ export const INVESTMENT_TYPES = {
     icon: 'calendar',
     color: '#5DADE2',
     fields: [
+      { name: 'investmentName', label: 'Investment Name', type: 'text', required: false },
       { name: 'principal', label: 'Principal Amount', type: 'number', required: true },
       { name: 'interestRate', label: 'Interest Rate (%)', type: 'number', required: true },
       { name: 'monthlyIncome', label: 'Monthly Income', type: 'number', required: true },
@@ -467,6 +561,7 @@ export const INVESTMENT_TYPES = {
     icon: 'leaf',
     color: '#58D68D',
     fields: [
+      { name: 'investmentName', label: 'Investment Name', type: 'text', required: false },
       { name: 'principal', label: 'Principal Amount', type: 'number', required: true },
       { name: 'interestRate', label: 'Interest Rate (%)', type: 'number', required: true },
       { name: 'maturityAmount', label: 'Maturity Amount', type: 'number', required: true },
@@ -478,13 +573,33 @@ export const INVESTMENT_TYPES = {
     displayFormat: (investment) => {
       const start = new Date(investment.purchaseDate);
       const maturity = new Date(investment.maturityDate);
+      const now = new Date();
       const tenureYears = (maturity - start) / (1000 * 60 * 60 * 24 * 365.25);
+
+      // Calculate current value based on time elapsed
+      let currentValue;
+      if (now >= maturity) {
+        // If maturity date has passed, current value = maturity amount
+        currentValue = investment.maturityAmount;
+      } else if (now <= start) {
+        // If before purchase date, current value = principal
+        currentValue = investment.principal;
+      } else {
+        // Calculate proportional value based on time elapsed
+        const totalDays = (maturity - start) / (1000 * 60 * 60 * 24);
+        const daysPassed = (now - start) / (1000 * 60 * 60 * 24);
+        const proportionElapsed = daysPassed / totalDays;
+
+        // Linear interpolation between principal and maturity amount
+        const totalGrowth = investment.maturityAmount - investment.principal;
+        currentValue = investment.principal + (totalGrowth * proportionElapsed);
+      }
 
       return {
         quantity: `${Math.round(tenureYears * 12)} months`,
         invested: investment.principal,
-        current: investment.maturityAmount,
-        returns: investment.maturityAmount - investment.principal
+        current: currentValue,
+        returns: currentValue - investment.principal
       };
     }
   },
@@ -495,8 +610,21 @@ export const INVESTMENT_TYPES = {
     icon: 'time',
     color: '#AF7AC5',
     fields: [
+      { name: 'investmentName', label: 'Investment Name', type: 'text', required: false },
       { name: 'principal', label: 'Principal Amount', type: 'number', required: true },
       { name: 'interestRate', label: 'Interest Rate (%)', type: 'number', required: true },
+      {
+        name: 'compoundingFrequency',
+        label: 'Compounding Frequency',
+        type: 'select',
+        required: false,
+        options: [
+          { label: 'Quarterly (Default)', value: 'quarterly' },
+          { label: 'Monthly', value: 'monthly' },
+          { label: 'Half-Yearly', value: 'half-yearly' },
+          { label: 'Yearly', value: 'yearly' }
+        ]
+      },
       { name: 'tenure', label: 'Tenure (years)', type: 'number', required: true },
       { name: 'startDate', label: 'Start Date', type: 'date', required: true },
       { name: 'maturityDate', label: 'Maturity Date', type: 'date', required: true },
@@ -525,6 +653,7 @@ export const INVESTMENT_TYPES = {
     icon: 'ribbon',
     color: '#85929E',
     fields: [
+      { name: 'investmentName', label: 'Investment Name', type: 'text', required: false },
       { name: 'principal', label: 'Principal Amount', type: 'number', required: true },
       { name: 'interestRate', label: 'Interest Rate (%)', type: 'number', required: true },
       { name: 'maturityAmount', label: 'Maturity Amount', type: 'number', required: true },
@@ -539,6 +668,51 @@ export const INVESTMENT_TYPES = {
       current: investment.maturityAmount,
       returns: investment.maturityAmount - investment.principal
     })
+  },
+
+  POST_OFFICE_MSSC: {
+    id: 'POST_OFFICE_MSSC',
+    name: 'Post Office MSSC',
+    icon: 'woman',
+    color: '#E91E63',
+    fields: [
+      { name: 'investmentName', label: 'Investment Name', type: 'text', required: false },
+      { name: 'principal', label: 'Principal Amount', type: 'number', required: true },
+      { name: 'interestRate', label: 'Interest Rate (%)', type: 'number', required: true },
+      {
+        name: 'compoundingFrequency',
+        label: 'Compounding Frequency',
+        type: 'select',
+        required: false,
+        options: [
+          { label: 'Quarterly (Default)', value: 'quarterly' },
+          { label: 'Monthly', value: 'monthly' },
+          { label: 'Half-Yearly', value: 'half-yearly' },
+          { label: 'Yearly', value: 'yearly' }
+        ]
+      },
+      { name: 'depositDate', label: 'Deposit Date', type: 'date', required: true },
+      { name: 'maturityDate', label: 'Maturity Date', type: 'date', required: true },
+      { name: 'accountNumber', label: 'Account Number', type: 'text', required: false },
+      { name: 'notes', label: 'Notes', type: 'text', required: false }
+    ],
+    displayFormat: (investment) => {
+      const start = new Date(investment.depositDate);
+      const maturity = new Date(investment.maturityDate);
+      const tenureYears = (maturity - start) / (1000 * 60 * 60 * 24 * 365.25);
+
+      // Quarterly compounding (default)
+      const n = 4; // quarters per year
+      const r = investment.interestRate / 100;
+      const maturityAmount = investment.principal * Math.pow((1 + r / n), n * tenureYears);
+
+      return {
+        quantity: `${Math.round(tenureYears * 12)} months`,
+        invested: investment.principal,
+        current: maturityAmount,
+        returns: maturityAmount - investment.principal
+      };
+    }
   },
 
   OTHER: {

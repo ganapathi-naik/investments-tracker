@@ -9,7 +9,8 @@ import {
   TouchableOpacity,
   TextInput
 } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { loadInvestments, loadSettings } from '../utils/storage';
 import {
   groupInvestmentsByType,
@@ -24,6 +25,7 @@ import { INVESTMENT_TYPES } from '../models/InvestmentTypes';
 const { width } = Dimensions.get('window');
 
 const ReportsScreen = () => {
+  const navigation = useNavigation();
   const [investments, setInvestments] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [reportData, setReportData] = useState([]);
@@ -105,38 +107,43 @@ const ReportsScreen = () => {
         : String(displayData.quantity || 'N/A');
     }
 
-    // Get specific name for the investment
-    switch (investment.type) {
-      case 'MUTUAL_FUND':
-        name = investment.fundName || name;
-        break;
-      case 'STOCKS':
-      case 'US_STOCKS':
-        name = investment.stockName || investment.symbol || name;
-        break;
-      case 'RSU':
-      case 'ESPP':
-        name = investment.companyName || name;
-        break;
-      case 'CRYPTOCURRENCY':
-        name = investment.coinName || investment.symbol || name;
-        break;
-      case 'FIXED_DEPOSIT':
-      case 'RECURRING_DEPOSIT':
-        name = investment.bankName || name;
-        break;
-      case 'REAL_ESTATE':
-        name = investment.propertyName || name;
-        break;
-      case 'BONDS':
-        name = investment.bondName || name;
-        break;
-      case 'INSURANCE':
-        name = investment.policyName || name;
-        break;
-      case 'OTHER':
-        name = investment.investmentName || name;
-        break;
+    // First check if investmentName exists (newly added field for all types)
+    if (investment.investmentName) {
+      name = investment.investmentName;
+    } else {
+      // Get specific name for the investment from type-specific fields
+      switch (investment.type) {
+        case 'PHYSICAL_GOLD':
+          name = investment.itemName || name;
+          break;
+        case 'MUTUAL_FUND':
+          name = investment.fundName || name;
+          break;
+        case 'STOCKS':
+        case 'US_STOCKS':
+          name = investment.stockName || investment.symbol || name;
+          break;
+        case 'RSU':
+        case 'ESPP':
+          name = investment.companyName || name;
+          break;
+        case 'CRYPTOCURRENCY':
+          name = investment.coinName || investment.symbol || name;
+          break;
+        case 'FIXED_DEPOSIT':
+        case 'RECURRING_DEPOSIT':
+          name = investment.bankName || name;
+          break;
+        case 'REAL_ESTATE':
+          name = investment.propertyName || name;
+          break;
+        case 'BONDS':
+          name = investment.bondName || name;
+          break;
+        case 'INSURANCE':
+          name = investment.policyName || name;
+          break;
+      }
     }
 
     return { name, quantity };
@@ -158,7 +165,7 @@ const ReportsScreen = () => {
       if (!['EPF', 'PPF', 'FIXED_DEPOSIT', 'RECURRING_DEPOSIT', 'NPS',
            'POST_OFFICE_SCSS', 'POST_OFFICE_SAVINGS', 'POST_OFFICE_MIS',
            'POST_OFFICE_KVP', 'POST_OFFICE_TD', 'POST_OFFICE_NSC',
-           'POST_OFFICE_RD', 'BONDS', 'SGB'].includes(investment.type)) {
+           'POST_OFFICE_RD', 'POST_OFFICE_MSSC', 'BONDS', 'SGB'].includes(investment.type)) {
         return;
       }
 
@@ -211,7 +218,41 @@ const ReportsScreen = () => {
 
             if (fdStart <= yearEnd && fdMaturity >= yearStart) {
               isActiveInYear = true;
-              yearlyInterest = (investment.principal || 0) * (interestRate / 100);
+              const principal = investment.principal || 0;
+              const payoutType = investment.interestPayoutType || 'cumulative'; // Default to cumulative
+
+              if (payoutType === 'non-cumulative') {
+                // Non-cumulative: Interest paid out, principal stays same
+                yearlyInterest = principal * (interestRate / 100);
+              } else {
+                // Cumulative: Interest compounds, need to calculate based on compounded balance
+                // Calculate years elapsed from start to beginning of this year
+                const yearsFromStart = Math.max(0, (yearStart - fdStart) / (1000 * 60 * 60 * 24 * 365.25));
+
+                // Determine compounding frequency
+                const freq = (investment.compoundingFrequency || 'yearly').toLowerCase();
+                let n; // compounding periods per year
+                switch (freq) {
+                  case 'monthly': n = 12; break;
+                  case 'quarterly': n = 4; break;
+                  case 'halfyearly':
+                  case 'half-yearly':
+                  case 'semi-annually': n = 2; break;
+                  case 'yearly': n = 1; break;
+                  case 'simple': n = 1; break; // For simple interest
+                  default: n = 1;
+                }
+
+                if (freq === 'simple') {
+                  // Simple interest doesn't compound
+                  yearlyInterest = principal * (interestRate / 100);
+                } else {
+                  // Compound interest: Calculate balance at start and end of year
+                  const balanceAtYearStart = principal * Math.pow((1 + interestRate / (100 * n)), n * yearsFromStart);
+                  const balanceAtYearEnd = principal * Math.pow((1 + interestRate / (100 * n)), n * (yearsFromStart + 1));
+                  yearlyInterest = balanceAtYearEnd - balanceAtYearStart;
+                }
+              }
             }
           }
           break;
@@ -306,6 +347,28 @@ const ReportsScreen = () => {
             }
           }
           break;
+
+        case 'POST_OFFICE_MSSC':
+          // MSSC has quarterly compounding
+          if (investment.depositDate && investment.maturityDate) {
+            const msscStart = new Date(investment.depositDate);
+            const msscMaturity = new Date(investment.maturityDate);
+
+            if (msscStart <= yearEnd && msscMaturity >= yearStart) {
+              isActiveInYear = true;
+              const principal = investment.principal || 0;
+
+              // Calculate years from deposit to beginning of this year
+              const yearsFromStart = Math.max(0, (yearStart - msscStart) / (1000 * 60 * 60 * 24 * 365.25));
+
+              // Quarterly compounding
+              const n = 4;
+              const balanceAtYearStart = principal * Math.pow((1 + interestRate / (100 * n)), n * yearsFromStart);
+              const balanceAtYearEnd = principal * Math.pow((1 + interestRate / (100 * n)), n * (yearsFromStart + 1));
+              yearlyInterest = balanceAtYearEnd - balanceAtYearStart;
+            }
+          }
+          break;
       }
 
       if (isActiveInYear) {
@@ -345,17 +408,32 @@ const ReportsScreen = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Reports</Text>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => navigation.navigate('AddInvestment')}
+          >
+            <Ionicons name="add-circle-outline" size={24} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => navigation.navigate('Settings')}
+          >
+            <Ionicons name="settings-outline" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
         style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
         {/* Overall Summary */}
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryTitle}>Portfolio Summary</Text>
+          <Text style={[styles.summaryTitle, { marginBottom: 15 }]}>Portfolio Summary</Text>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Total Invested:</Text>
             <Text style={styles.summaryValue}>{formatINR(totalInvested)}</Text>
@@ -377,7 +455,15 @@ const ReportsScreen = () => {
 
         {/* Yearly Interest/Returns Card */}
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryTitle}>Yearly Interest Earned</Text>
+          <View style={styles.yearlyTitleRow}>
+            <Text style={styles.summaryTitle}>Yearly Interest Earned</Text>
+            <TouchableOpacity
+              style={styles.debugButton}
+              onPress={() => navigation.navigate('YearlyReturnsDebug', { selectedYear })}
+            >
+              <Ionicons name="information-circle-outline" size={24} color="#4A90E2" />
+            </TouchableOpacity>
+          </View>
           <View style={styles.yearInputContainer}>
             <Text style={styles.yearLabel}>Select Year:</Text>
             <TextInput
@@ -387,6 +473,7 @@ const ReportsScreen = () => {
               keyboardType="numeric"
               maxLength={4}
               placeholder="YYYY"
+              placeholderTextColor="#999"
             />
           </View>
           {selectedYear.length === 4 && !isNaN(selectedYear) && parseInt(selectedYear) >= 1900 && parseInt(selectedYear) <= 2100 ? (
@@ -524,15 +611,29 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#4A90E2',
     padding: 20,
-    paddingTop: 50
+    paddingTop: 50,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center'
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#fff'
   },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 15
+  },
+  headerButton: {
+    padding: 5
+  },
   scrollView: {
     flex: 1
+  },
+  scrollViewContent: {
+    paddingBottom: 20
   },
   summaryCard: {
     backgroundColor: '#fff',
@@ -548,8 +649,16 @@ const styles = StyleSheet.create({
   summaryTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 15,
     color: '#333'
+  },
+  yearlyTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15
+  },
+  debugButton: {
+    padding: 4
   },
   summaryRow: {
     flexDirection: 'row',

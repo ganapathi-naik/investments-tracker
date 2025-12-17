@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getInvestmentById, deleteInvestment } from '../utils/storage';
 import {
   getInvestedAmount,
@@ -23,6 +24,7 @@ import { INVESTMENT_TYPES } from '../models/InvestmentTypes';
 const InvestmentDetailScreen = ({ route, navigation }) => {
   const { investmentId } = route.params;
   const [investment, setInvestment] = useState(null);
+  const insets = useSafeAreaInsets();
 
   const loadData = async () => {
     const data = await getInvestmentById(investmentId);
@@ -80,7 +82,10 @@ const InvestmentDetailScreen = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollView}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
+      >
         {/* Header Card */}
         <View style={[styles.headerCard, { borderLeftColor: type?.color || '#999' }]}>
           <Text style={styles.typeName}>{type?.name || investment.type}</Text>
@@ -129,11 +134,16 @@ const InvestmentDetailScreen = ({ route, navigation }) => {
           <Text style={styles.sectionTitle}>Investment Details</Text>
           {type?.fields.map((field) => {
             const value = investment[field.name];
+            // Skip fields that have no value and are not required
             if (!value && !field.required) return null;
 
             let displayValue = value;
             if (field.type === 'date' && value) {
               displayValue = new Date(value).toLocaleDateString();
+            } else if (field.type === 'select' && value) {
+              // For select fields, find the label that matches the value
+              const selectedOption = field.options?.find(opt => opt.value === value);
+              displayValue = selectedOption?.label || value;
             }
 
             return (
@@ -144,20 +154,20 @@ const InvestmentDetailScreen = ({ route, navigation }) => {
             );
           })}
         </View>
-
-        {/* Actions */}
-        <View style={styles.actionsContainer}>
-          <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
-            <Ionicons name="pencil" size={20} color="#fff" />
-            <Text style={styles.buttonText}>Edit</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-            <Ionicons name="trash" size={20} color="#fff" />
-            <Text style={styles.buttonText}>Delete</Text>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
+
+      {/* Actions - Fixed at Bottom */}
+      <View style={[styles.actionsContainer, { paddingBottom: insets.bottom + 15 }]}>
+        <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
+          <Ionicons name="pencil" size={20} color="#fff" />
+          <Text style={styles.buttonText}>Edit</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+          <Ionicons name="trash" size={20} color="#fff" />
+          <Text style={styles.buttonText}>Delete</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -169,6 +179,9 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1
+  },
+  scrollViewContent: {
+    paddingBottom: 100
   },
   loadingText: {
     textAlign: 'center',
@@ -271,9 +284,20 @@ const styles = StyleSheet.create({
     textAlign: 'right'
   },
   actionsContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
-    margin: 15,
-    marginTop: 0,
+    backgroundColor: '#fff',
+    padding: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     gap: 10
   },
   editButton: {
