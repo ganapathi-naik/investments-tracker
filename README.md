@@ -4,9 +4,17 @@ A comprehensive mobile application built with React Native and Expo for tracking
 
 ## App Demo
 
-![Investment Tracker Demo](screenshots/app_demo.gif)
-
-*Navigate through Dashboard, Portfolio, Reports, and Settings screens*
+<div align="center">
+  <a href="https://vimeo.com/1148012969" target="_blank">
+    <img src="screenshots/1148012969.jpg" alt="Investment Tracker Demo" width="600" />
+  </a>
+  <br/>
+  <a href="https://vimeo.com/1148012969" target="_blank">
+    <img src="https://img.shields.io/badge/▶️_Watch_Demo-Vimeo-1ab7ea?style=for-the-badge&logo=vimeo&logoColor=white" alt="Watch Demo on Vimeo" />
+  </a>
+  <br/><br/>
+  <em>📱 Navigate through Dashboard, Portfolio, Reports, and Settings screens</em>
+</div>
 
 ## Features
 

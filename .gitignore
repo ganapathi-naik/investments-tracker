@@ -69,6 +69,10 @@ logs/
 # STATUS.txt
 # APK_REBUILD_STATUS.md
 
+# Video upload guides (temporary)
+YOUTUBE_UPLOAD_GUIDE.md
+VIMEO_UPLOAD_GUIDE.md
+
 # Testing
 coverage/
 .nyc_output
