@@ -72,3 +72,7 @@ logs/
 # Testing
 coverage/
 .nyc_output
+
+# Screenshots - ignore temporary video files, keep GIF
+screenshots/*.mp4
+screenshots/*_unoptimized.gif

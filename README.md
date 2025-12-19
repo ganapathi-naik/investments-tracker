@@ -2,6 +2,12 @@
 
 A comprehensive mobile application built with React Native and Expo for tracking and managing diverse investment portfolios. Monitor 23+ types of investments including stocks, mutual funds, fixed deposits, gold, real estate, and more - all in one place.
 
+## App Demo
+
+![Investment Tracker Demo](screenshots/app_demo.gif)
+
+*Navigate through Dashboard, Portfolio, Reports, and Settings screens*
+
 ## Features
 
 ### Core Functionality
