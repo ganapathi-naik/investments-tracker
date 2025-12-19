@@ -14,7 +14,7 @@ import { loadInvestments } from '../utils/storage';
 import { formatINR } from '../utils/calculations';
 import { INVESTMENT_TYPES } from '../models/InvestmentTypes';
 
-const YearlyReturnsDebugScreen = ({ navigation, route }) => {
+const YearlyReturnsBreakdownScreen = ({ navigation, route }) => {
   const insets = useSafeAreaInsets();
   const [investments, setInvestments] = useState([]);
   const [selectedYear, setSelectedYear] = useState(
@@ -334,13 +334,13 @@ const YearlyReturnsDebugScreen = ({ navigation, route }) => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Yearly Returns Debug</Text>
+        <Text style={styles.headerTitle}>Yearly Returns Breakdown</Text>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.scrollViewContent, { paddingBottom: insets.bottom + 20 }]}
+        contentContainerStyle={[styles.scrollViewContent, { paddingBottom: insets.bottom + 8 }]}
       >
         <View style={styles.yearInputCard}>
           <Text style={styles.yearLabel}>Select Year:</Text>
@@ -546,4 +546,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default YearlyReturnsDebugScreen;
+export default YearlyReturnsBreakdownScreen;

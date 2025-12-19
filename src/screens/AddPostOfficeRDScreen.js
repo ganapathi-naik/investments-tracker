@@ -155,7 +155,7 @@ const AddPostOfficeRDScreen = ({ navigation }) => {
     >
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollViewContent}
+        contentContainerStyle={[styles.scrollViewContent, { paddingBottom: insets.bottom + 92 }]}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.section}>
@@ -304,7 +304,7 @@ const AddPostOfficeRDScreen = ({ navigation }) => {
         )}
       </ScrollView>
 
-      <View style={[styles.saveButtonContainer, { paddingBottom: insets.bottom + 15 }]}>
+      <View style={[styles.saveButtonContainer, { paddingBottom: insets.bottom + 8 }]}>
         <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
           <Ionicons name="save" size={20} color="#fff" />
           <Text style={styles.saveButtonText}>Save Post Office RD</Text>
@@ -323,7 +323,6 @@ const styles = StyleSheet.create({
     flex: 1
   },
   scrollViewContent: {
-    paddingBottom: 100
   },
   section: {
     backgroundColor: '#fff',

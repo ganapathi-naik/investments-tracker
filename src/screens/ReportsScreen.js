@@ -21,6 +21,7 @@ import {
   formatPercentage
 } from '../utils/calculations';
 import { INVESTMENT_TYPES } from '../models/InvestmentTypes';
+import { calculateYearlyReturnsComparison, getLastNYears, getPerformanceHighlights, calculateMonthlyReturns } from '../utils/analytics';
 
 const { width } = Dimensions.get('window');
 
@@ -32,6 +33,10 @@ const ReportsScreen = () => {
   const [usdToInrRate, setUsdToInrRate] = useState(83.0);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [yearlyReturns, setYearlyReturns] = useState(0);
+  const [yearComparison, setYearComparison] = useState([]);
+  const [performanceHighlights, setPerformanceHighlights] = useState({ topPerformers: [], bottomPerformers: [] });
+  const [monthlyReturns, setMonthlyReturns] = useState([]);
+  const [expandedTypes, setExpandedTypes] = useState({});
 
   const loadData = async () => {
     const [data, settings] = await Promise.all([
@@ -81,6 +86,34 @@ const ReportsScreen = () => {
     await loadData();
     setRefreshing(false);
   };
+
+  const toggleType = useCallback((typeId) => {
+    setExpandedTypes(prev => ({
+      ...prev,
+      [typeId]: prev[typeId] === undefined ? false : !prev[typeId]
+    }));
+  }, []);
+
+  const collapseAll = useCallback(() => {
+    const allCollapsed = {};
+    reportData.forEach(report => {
+      allCollapsed[report.typeId] = false;
+    });
+    setExpandedTypes(allCollapsed);
+  }, [reportData]);
+
+  const expandAll = useCallback(() => {
+    const allExpanded = {};
+    reportData.forEach(report => {
+      allExpanded[report.typeId] = true;
+    });
+    setExpandedTypes(allExpanded);
+  }, [reportData]);
+
+  const areAllCollapsed = useCallback(() => {
+    if (reportData.length === 0) return false;
+    return reportData.every(report => expandedTypes[report.typeId] === false);
+  }, [reportData, expandedTypes]);
 
   const totalInvested = calculateTotalInvested(investments, usdToInrRate);
   const totalCurrent = calculateTotalCurrentValue(investments, usdToInrRate);
@@ -396,12 +429,25 @@ const ReportsScreen = () => {
     }
   };
 
-  // Calculate initial yearly returns
+  // Calculate initial yearly returns, year comparison, and performance highlights
   useFocusEffect(
     useCallback(() => {
       const returns = calculateYearlyReturns(selectedYear);
       setYearlyReturns(returns);
-    }, [investments, selectedYear])
+
+      // Calculate year-over-year comparison for last 5 years
+      const years = getLastNYears(5);
+      const comparison = calculateYearlyReturnsComparison(investments, years);
+      setYearComparison(comparison);
+
+      // Calculate performance highlights
+      const highlights = getPerformanceHighlights(investments, usdToInrRate);
+      setPerformanceHighlights(highlights);
+
+      // Calculate monthly returns for current year
+      const monthly = calculateMonthlyReturns(investments, parseInt(selectedYear));
+      setMonthlyReturns(monthly);
+    }, [investments, selectedYear, usdToInrRate])
   );
 
   return (
@@ -459,7 +505,7 @@ const ReportsScreen = () => {
             <Text style={styles.summaryTitle}>Yearly Interest Earned</Text>
             <TouchableOpacity
               style={styles.debugButton}
-              onPress={() => navigation.navigate('YearlyReturnsDebug', { selectedYear })}
+              onPress={() => navigation.navigate('YearlyReturnsBreakdown', { selectedYear })}
             >
               <Ionicons name="information-circle-outline" size={24} color="#4A90E2" />
             </TouchableOpacity>
@@ -495,23 +541,228 @@ const ReportsScreen = () => {
           )}
         </View>
 
-        {/* Type-wise Reports */}
-        {reportData.map((report) => (
-          <View key={report.typeId} style={styles.reportCard}>
-            <View style={styles.reportHeader}>
-              <View
-                style={[
-                  styles.typeIndicator,
-                  { backgroundColor: report.type?.color || '#999' }
-                ]}
-              />
-              <View style={styles.reportHeaderText}>
-                <Text style={styles.reportTitle}>{report.type?.name || report.typeId}</Text>
-                <Text style={styles.reportSubtitle}>
-                  {report.count} investment{report.count !== 1 ? 's' : ''}
-                </Text>
-              </View>
+        {/* Year-over-Year Comparison */}
+        {yearComparison.length > 0 && (
+          <View style={styles.summaryCard}>
+            <Text style={[styles.summaryTitle, { marginBottom: 15 }]}>Year-over-Year Comparison</Text>
+            <Text style={styles.comparisonSubtitle}>
+              Interest earned over the last 5 years
+            </Text>
+            {yearComparison.map((yearData, index) => {
+              const maxReturns = Math.max(...yearComparison.map(y => y.returns), 1);
+              const barWidth = (yearData.returns / maxReturns) * 100;
+
+              return (
+                <View key={yearData.year} style={styles.comparisonRow}>
+                  <Text style={styles.comparisonYear}>{yearData.year}</Text>
+                  <View style={styles.comparisonBarContainer}>
+                    <View
+                      style={[
+                        styles.comparisonBar,
+                        {
+                          width: `${barWidth}%`,
+                          backgroundColor: yearData.year === selectedYear ? '#4A90E2' : '#27AE60'
+                        }
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.comparisonValue}>
+                    {formatINR(yearData.returns)}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
+        {/* Monthly Returns Breakdown */}
+        {monthlyReturns.length > 0 && (
+          <View style={styles.summaryCard}>
+            <Text style={[styles.summaryTitle, { marginBottom: 15 }]}>Monthly Interest Breakdown</Text>
+            <Text style={styles.comparisonSubtitle}>
+              Month-by-month interest earned in {selectedYear}
+            </Text>
+            <View style={styles.monthlyGrid}>
+              {monthlyReturns.map((monthData, index) => {
+                const maxMonthlyReturns = Math.max(...monthlyReturns.map(m => m.returns), 1);
+                const barHeight = (monthData.returns / maxMonthlyReturns) * 100;
+                const currentMonth = new Date().getMonth() + 1;
+                const currentYear = new Date().getFullYear();
+                const isCurrentMonth = monthData.month === currentMonth && parseInt(selectedYear) === currentYear;
+                const isFutureMonth = (parseInt(selectedYear) === currentYear && monthData.month > currentMonth) ||
+                                     (parseInt(selectedYear) > currentYear);
+
+                // Format value compactly for display
+                const formatCompactValue = (value) => {
+                  if (value === 0) return '-';
+                  if (value >= 10000000) {
+                    // Show in crores: ₹12C
+                    return `₹${Math.round(value / 10000000)}C`;
+                  } else if (value >= 100000) {
+                    // Show in lakhs: ₹12L
+                    return `₹${Math.round(value / 100000)}L`;
+                  } else if (value >= 1000) {
+                    // Show in thousands: ₹12K
+                    return `₹${Math.round(value / 1000)}K`;
+                  } else {
+                    // Show full amount for small values
+                    return `₹${Math.round(value)}`;
+                  }
+                };
+
+                return (
+                  <View key={monthData.month} style={styles.monthlyItem}>
+                    <View style={styles.monthlyBarContainer}>
+                      <View
+                        style={[
+                          styles.monthlyBar,
+                          {
+                            height: isFutureMonth ? '5%' : `${Math.max(barHeight, 5)}%`,
+                            backgroundColor: isCurrentMonth ? '#4A90E2' :
+                                           isFutureMonth ? '#E0E0E0' : '#27AE60',
+                            opacity: isFutureMonth ? 0.3 : 1
+                          }
+                        ]}
+                      />
+                    </View>
+                    <Text style={[
+                      styles.monthlyLabel,
+                      isCurrentMonth && styles.currentMonthLabel
+                    ]}>
+                      {monthData.monthName}
+                    </Text>
+                    {!isFutureMonth && (
+                      <Text style={styles.monthlyValue}>
+                        {formatCompactValue(monthData.returns)}
+                      </Text>
+                    )}
+                  </View>
+                );
+              })}
             </View>
+            <Text style={styles.yearlyReturnsNote}>
+              * Shows estimated monthly interest distribution for the selected year
+            </Text>
+          </View>
+        )}
+
+        {/* Performance Highlights */}
+        {(performanceHighlights.topPerformers.length > 0 || performanceHighlights.bottomPerformers.length > 0) && (
+          <View style={styles.summaryCard}>
+            <Text style={[styles.summaryTitle, { marginBottom: 15 }]}>Performance Highlights</Text>
+
+            {/* Top Performers */}
+            {performanceHighlights.topPerformers.length > 0 && (
+              <View style={styles.performanceSection}>
+                <View style={styles.performanceHeader}>
+                  <Ionicons name="trending-up" size={20} color="#27AE60" />
+                  <Text style={styles.performanceSectionTitle}>Top Performers</Text>
+                </View>
+                {performanceHighlights.topPerformers.map((item, index) => {
+                  const details = getInvestmentDetails(item.investment);
+                  return (
+                    <View key={item.investment.id} style={styles.performanceItem}>
+                      <View style={styles.performanceRank}>
+                        <Text style={styles.performanceRankText}>{index + 1}</Text>
+                      </View>
+                      <View style={styles.performanceInfo}>
+                        <Text style={styles.performanceName}>{details.name}</Text>
+                        <Text style={styles.performanceQuantity}>{details.quantity}</Text>
+                      </View>
+                      <View style={styles.performanceStats}>
+                        <Text style={[styles.performanceReturn, styles.positiveReturns]}>
+                          {formatPercentage(item.returnsPercentage)}
+                        </Text>
+                        <Text style={[styles.performanceAmount, styles.positiveReturns]}>
+                          {formatINR(item.returns)}
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+
+            {/* Bottom Performers */}
+            {performanceHighlights.bottomPerformers.length > 0 && (
+              <View style={[styles.performanceSection, { marginTop: 20 }]}>
+                <View style={styles.performanceHeader}>
+                  <Ionicons name="trending-down" size={20} color="#E74C3C" />
+                  <Text style={styles.performanceSectionTitle}>Needs Attention</Text>
+                </View>
+                {performanceHighlights.bottomPerformers.map((item, index) => {
+                  const details = getInvestmentDetails(item.investment);
+                  return (
+                    <View key={item.investment.id} style={styles.performanceItem}>
+                      <View style={[styles.performanceRank, { backgroundColor: '#FFE5E5' }]}>
+                        <Text style={[styles.performanceRankText, { color: '#E74C3C' }]}>{index + 1}</Text>
+                      </View>
+                      <View style={styles.performanceInfo}>
+                        <Text style={styles.performanceName}>{details.name}</Text>
+                        <Text style={styles.performanceQuantity}>{details.quantity}</Text>
+                      </View>
+                      <View style={styles.performanceStats}>
+                        <Text style={[styles.performanceReturn, item.returns >= 0 ? styles.positiveReturns : styles.negativeReturns]}>
+                          {formatPercentage(item.returnsPercentage)}
+                        </Text>
+                        <Text style={[styles.performanceAmount, item.returns >= 0 ? styles.positiveReturns : styles.negativeReturns]}>
+                          {formatINR(item.returns)}
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Type-wise Reports */}
+        {reportData.length > 0 && (
+          <View style={styles.typeReportsHeader}>
+            <Text style={styles.typeReportsTitle}>Type-wise Reports</Text>
+            <TouchableOpacity
+              style={styles.collapseButton}
+              onPress={areAllCollapsed() ? expandAll : collapseAll}
+            >
+              <Ionicons
+                name={areAllCollapsed() ? "expand-outline" : "contract-outline"}
+                size={20}
+                color="#4A90E2"
+              />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {reportData.map((report) => {
+          const isExpanded = expandedTypes[report.typeId] === undefined ? true : expandedTypes[report.typeId];
+
+          return (
+            <View key={report.typeId} style={styles.reportCard}>
+              <TouchableOpacity
+                style={styles.reportHeader}
+                onPress={() => toggleType(report.typeId)}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name={isExpanded ? "chevron-down" : "chevron-forward"}
+                  size={20}
+                  color="#666"
+                  style={styles.chevronIcon}
+                />
+                <View
+                  style={[
+                    styles.typeIndicator,
+                    { backgroundColor: report.type?.color || '#999' }
+                  ]}
+                />
+                <View style={styles.reportHeaderText}>
+                  <Text style={styles.reportTitle}>{report.type?.name || report.typeId}</Text>
+                  <Text style={styles.reportSubtitle}>
+                    {report.count} investment{report.count !== 1 ? 's' : ''}
+                  </Text>
+                </View>
+              </TouchableOpacity>
 
             <View style={styles.reportStats}>
               <View style={styles.statColumn}>
@@ -562,35 +813,38 @@ const ReportsScreen = () => {
             </View>
 
             {/* Investment List for this type */}
-            <View style={styles.investmentList}>
-              <Text style={styles.investmentListTitle}>Investments:</Text>
-              {report.investments.map((investment) => {
-                const details = getInvestmentDetails(investment);
-                const invested = calculateTotalInvested([investment], usdToInrRate);
-                const current = calculateTotalCurrentValue([investment], usdToInrRate);
-                const returns = calculateTotalReturns([investment], usdToInrRate);
+            {isExpanded && (
+              <View style={styles.investmentList}>
+                <Text style={styles.investmentListTitle}>Investments:</Text>
+                {report.investments.map((investment) => {
+                  const details = getInvestmentDetails(investment);
+                  const invested = calculateTotalInvested([investment], usdToInrRate);
+                  const current = calculateTotalCurrentValue([investment], usdToInrRate);
+                  const returns = calculateTotalReturns([investment], usdToInrRate);
 
-                return (
-                  <View key={investment.id} style={styles.investmentItem}>
-                    <View style={styles.investmentItemLeft}>
-                      <Text style={styles.investmentItemName}>{details.name}</Text>
-                      <Text style={styles.investmentItemQuantity}>{details.quantity}</Text>
+                  return (
+                    <View key={investment.id} style={styles.investmentItem}>
+                      <View style={styles.investmentItemLeft}>
+                        <Text style={styles.investmentItemName}>{details.name}</Text>
+                        <Text style={styles.investmentItemQuantity}>{details.quantity}</Text>
+                      </View>
+                      <View style={styles.investmentItemRight}>
+                        <Text style={styles.investmentItemValue}>{formatINR(current)}</Text>
+                        <Text style={[
+                          styles.investmentItemReturns,
+                          returns >= 0 ? styles.positiveReturns : styles.negativeReturns
+                        ]}>
+                          {formatINR(returns)}
+                        </Text>
+                      </View>
                     </View>
-                    <View style={styles.investmentItemRight}>
-                      <Text style={styles.investmentItemValue}>{formatINR(current)}</Text>
-                      <Text style={[
-                        styles.investmentItemReturns,
-                        returns >= 0 ? styles.positiveReturns : styles.negativeReturns
-                      ]}>
-                        {formatINR(returns)}
-                      </Text>
-                    </View>
-                  </View>
-                );
-              })}
-            </View>
+                  );
+                })}
+              </View>
+            )}
           </View>
-        ))}
+          );
+        })}
 
         {reportData.length === 0 && (
           <View style={styles.emptyContainer}>
@@ -712,6 +966,30 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginTop: 5
   },
+  typeReportsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    marginHorizontal: 10,
+    marginTop: 10,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2
+  },
+  typeReportsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333'
+  },
+  collapseButton: {
+    padding: 5
+  },
   reportCard: {
     backgroundColor: '#fff',
     margin: 10,
@@ -730,6 +1008,9 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0'
+  },
+  chevronIcon: {
+    marginRight: 8
   },
   typeIndicator: {
     width: 4,
@@ -846,6 +1127,147 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#ccc',
     marginTop: 8
+  },
+  comparisonSubtitle: {
+    fontSize: 12,
+    color: '#999',
+    marginBottom: 15,
+    fontStyle: 'italic'
+  },
+  comparisonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12
+  },
+  comparisonYear: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    width: 50
+  },
+  comparisonBarContainer: {
+    flex: 1,
+    height: 24,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 4,
+    marginHorizontal: 10,
+    overflow: 'hidden'
+  },
+  comparisonBar: {
+    height: '100%',
+    borderRadius: 4,
+    minWidth: 2
+  },
+  comparisonValue: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#333',
+    width: 80,
+    textAlign: 'right'
+  },
+  performanceSection: {
+    marginBottom: 10
+  },
+  performanceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 8
+  },
+  performanceSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333'
+  },
+  performanceItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+    gap: 10
+  },
+  performanceRank: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#E8F5E9',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  performanceRankText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#27AE60'
+  },
+  performanceInfo: {
+    flex: 1
+  },
+  performanceName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+    marginBottom: 2
+  },
+  performanceQuantity: {
+    fontSize: 12,
+    color: '#999'
+  },
+  performanceStats: {
+    alignItems: 'flex-end'
+  },
+  performanceReturn: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 2
+  },
+  performanceAmount: {
+    fontSize: 12,
+    fontWeight: '600'
+  },
+  monthlyGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    paddingVertical: 15,
+    paddingHorizontal: 5,
+    marginBottom: 10
+  },
+  monthlyItem: {
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: 2
+  },
+  monthlyBarContainer: {
+    height: 120,
+    width: '100%',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginBottom: 8
+  },
+  monthlyBar: {
+    width: '80%',
+    borderTopLeftRadius: 4,
+    borderTopRightRadius: 4,
+    minHeight: 5
+  },
+  monthlyLabel: {
+    fontSize: 9,
+    fontWeight: '600',
+    color: '#666',
+    marginBottom: 4,
+    textAlign: 'center'
+  },
+  currentMonthLabel: {
+    color: '#4A90E2',
+    fontWeight: 'bold'
+  },
+  monthlyValue: {
+    fontSize: 8,
+    color: '#27AE60',
+    fontWeight: '600',
+    textAlign: 'center'
   }
 });
 

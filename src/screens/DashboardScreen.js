@@ -22,7 +22,7 @@ import {
   calculatePortfolioAllocation
 } from '../utils/calculations';
 import { INVESTMENT_TYPES } from '../models/InvestmentTypes';
-import { scheduleMaturityNotifications } from '../services/notificationService';
+import { scheduleAllNotifications } from '../services/notificationService';
 
 const DashboardScreen = ({ navigation }) => {
   const [investments, setInvestments] = useState([]);
@@ -57,8 +57,8 @@ const DashboardScreen = ({ navigation }) => {
       returnsPercentage
     });
 
-    // Reschedule maturity notifications when dashboard loads
-    await scheduleMaturityNotifications();
+    // Reschedule all notifications when dashboard loads
+    await scheduleAllNotifications();
   };
 
   useFocusEffect(

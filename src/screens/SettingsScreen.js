@@ -13,10 +13,16 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystemLegacy from 'expo-file-system/legacy';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Sharing from 'expo-sharing';
+import * as MediaLibrary from 'expo-media-library';
 import { loadSettings, saveSettings, loadInvestments, saveInvestments } from '../utils/storage';
+import {
+  exportAllDocuments,
+  importDocuments,
+  getTotalDocumentCount
+} from '../services/documentService';
 
 const SettingsScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -46,47 +52,93 @@ const SettingsScreen = ({ navigation }) => {
   const handleExportData = async () => {
     try {
       setLoading(true);
-      const [investments, settings] = await Promise.all([
+
+      const [investments, settings, documentCount] = await Promise.all([
         loadInvestments(),
-        loadSettings()
+        loadSettings(),
+        getTotalDocumentCount()
       ]);
 
       const backupData = {
-        version: '1.0',
+        version: '2.0',
         exportDate: new Date().toISOString(),
         investments,
-        settings
+        settings,
+        hasDocuments: documentCount > 0
       };
 
       const jsonString = JSON.stringify(backupData, null, 2);
       const fileName = `investment-backup-${new Date().toISOString().split('T')[0]}.json`;
 
-      // Write to cache directory
-      const file = new FileSystem.File(FileSystem.Paths.cache, fileName);
+      // Write JSON to cache directory
+      const fileUri = `${FileSystemLegacy.cacheDirectory}${fileName}`;
+      await FileSystemLegacy.writeAsStringAsync(fileUri, jsonString);
 
-      // Delete if exists, then create
-      if (file.exists) {
-        await file.delete();
+      let shareUri = fileUri;
+      let shareFileName = fileName;
+      let shareMimeType = 'application/json';
+
+      // If there are documents, export them as ZIP and include with backup
+      if (documentCount > 0) {
+        const documentsZipPath = await exportAllDocuments();
+
+        if (documentsZipPath) {
+          // Create a composite backup that includes both JSON and ZIP
+          shareFileName = `investment-backup-${new Date().toISOString().split('T')[0]}.zip`;
+          const compositeZipPath = `${FileSystemLegacy.cacheDirectory}${shareFileName}`;
+
+          // Create a temporary directory for the backup
+          const tempBackupDir = `${FileSystemLegacy.cacheDirectory}backup_temp/`;
+          const tempBackupDirInfo = await FileSystemLegacy.getInfoAsync(tempBackupDir);
+
+          if (tempBackupDirInfo.exists) {
+            await FileSystemLegacy.deleteAsync(tempBackupDir, { idempotent: true });
+          }
+          await FileSystemLegacy.makeDirectoryAsync(tempBackupDir, { intermediates: true });
+
+          // Copy files to temp directory
+          await FileSystemLegacy.copyAsync({
+            from: fileUri,
+            to: `${tempBackupDir}data.json`
+          });
+          await FileSystemLegacy.copyAsync({
+            from: documentsZipPath,
+            to: `${tempBackupDir}documents.zip`
+          });
+
+          // Create final ZIP containing both files
+          const { zip } = require('react-native-zip-archive');
+          await zip(tempBackupDir, compositeZipPath);
+
+          shareUri = compositeZipPath;
+          shareMimeType = 'application/zip';
+
+          // Cleanup temp directory
+          await FileSystemLegacy.deleteAsync(tempBackupDir, { idempotent: true });
+        }
       }
-      await file.create();
-      await file.write(jsonString);
 
-      // Automatically share to save to Downloads
+      // For Android, use sharing which allows saving to Downloads
+      // The user can choose "Save to Downloads" from the share menu
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(file.uri, {
-          mimeType: 'application/json',
-          dialogTitle: 'Save Investment Backup to Downloads',
-          UTI: 'public.json'
+        await Sharing.shareAsync(shareUri, {
+          mimeType: shareMimeType,
+          dialogTitle: 'Save Backup to Downloads',
+          UTI: shareMimeType === 'application/zip' ? 'public.zip-archive' : 'public.json'
         });
       }
 
       Alert.alert(
         'Export Successful',
-        `Backup file created: ${fileName}\n\nUse the share dialog to save the file to Downloads or another location.`
+        `Backup created successfully!\n\n` +
+        `File: ${shareFileName}\n` +
+        `Investments: ${investments.length}\n` +
+        `Documents: ${documentCount}\n\n` +
+        `Use the share dialog to save to Downloads or share with other apps.`
       );
     } catch (error) {
       console.error('Export error:', error);
-      Alert.alert('Export Failed', 'Failed to export data. Please try again.');
+      Alert.alert('Export Failed', `Failed to export data: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -95,7 +147,7 @@ const SettingsScreen = ({ navigation }) => {
   const handleImportData = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: ['application/json', '*/*'],
+        type: ['application/json', 'application/zip', '*/*'],
         copyToCacheDirectory: true
       });
 
@@ -107,13 +159,50 @@ const SettingsScreen = ({ navigation }) => {
 
       console.log('Document picker result:', result);
       console.log('File URI:', result.assets[0].uri);
+      console.log('File name:', result.assets[0].name);
 
-      // Use fetch to read the file (works with content:// URIs)
-      const response = await fetch(result.assets[0].uri);
-      const fileContent = await response.text();
-      console.log('File content length:', fileContent.length);
+      let backupData;
+      let hasDocuments = false;
+      const fileName = result.assets[0].name;
+      const isZip = fileName.endsWith('.zip');
 
-      const backupData = JSON.parse(fileContent);
+      if (isZip) {
+        // Extract ZIP backup
+        const { unzip } = require('react-native-zip-archive');
+        const extractPath = `${FileSystemLegacy.cacheDirectory}import_temp/`;
+
+        // Clean up extract directory
+        const extractDirInfo = await FileSystemLegacy.getInfoAsync(extractPath);
+        if (extractDirInfo.exists) {
+          await FileSystemLegacy.deleteAsync(extractPath, { idempotent: true });
+        }
+        await FileSystemLegacy.makeDirectoryAsync(extractPath, { intermediates: true });
+
+        // Unzip backup file
+        await unzip(result.assets[0].uri, extractPath);
+
+        // Read data.json
+        const dataJsonUri = `${extractPath}data.json`;
+        const dataResponse = await fetch(dataJsonUri);
+        const dataContent = await dataResponse.text();
+        backupData = JSON.parse(dataContent);
+
+        // Check if documents.zip exists
+        const documentsZipUri = `${extractPath}documents.zip`;
+        const documentsZipInfo = await FileSystemLegacy.getInfoAsync(documentsZipUri);
+        hasDocuments = documentsZipInfo.exists;
+
+        if (hasDocuments) {
+          // Store documents.zip path for later import
+          backupData.documentsZipPath = documentsZipUri;
+        }
+      } else {
+        // JSON backup (old format)
+        const response = await fetch(result.assets[0].uri);
+        const fileContent = await response.text();
+        backupData = JSON.parse(fileContent);
+      }
+
       console.log('Parsed backup data:', backupData);
 
       // Validate backup data structure
@@ -122,20 +211,37 @@ const SettingsScreen = ({ navigation }) => {
       }
 
       // Show confirmation dialog
+      const documentMessage = hasDocuments || backupData.hasDocuments
+        ? '\nDocuments: Will be restored'
+        : '\nDocuments: None';
+
       Alert.alert(
         'Import Data',
-        `This will replace all current data with the backup from ${new Date(backupData.exportDate).toLocaleDateString()}.\n\nInvestments: ${backupData.investments.length}\n\nAre you sure you want to continue?`,
+        `This will replace all current data with the backup from ${new Date(backupData.exportDate).toLocaleDateString()}.\n\nInvestments: ${backupData.investments.length}${documentMessage}\n\nAre you sure you want to continue?`,
         [
           {
             text: 'Cancel',
             style: 'cancel',
-            onPress: () => setLoading(false)
+            onPress: async () => {
+              // Cleanup temp directory if exists
+              if (isZip) {
+                const extractPath = `${FileSystemLegacy.cacheDirectory}import_temp/`;
+                await FileSystemLegacy.deleteAsync(extractPath, { idempotent: true });
+              }
+              setLoading(false);
+            }
           },
           {
             text: 'Import',
             style: 'destructive',
             onPress: async () => {
               try {
+                // Import documents first if they exist
+                if (backupData.documentsZipPath) {
+                  await importDocuments(backupData.documentsZipPath);
+                }
+
+                // Import investment data
                 await saveInvestments(backupData.investments);
 
                 if (backupData.settings) {
@@ -143,9 +249,15 @@ const SettingsScreen = ({ navigation }) => {
                   setUsdToInrRate(backupData.settings.usdToInrRate.toString());
                 }
 
+                // Cleanup temp directory if exists
+                if (isZip) {
+                  const extractPath = `${FileSystemLegacy.cacheDirectory}import_temp/`;
+                  await FileSystemLegacy.deleteAsync(extractPath, { idempotent: true });
+                }
+
                 Alert.alert(
                   'Import Successful',
-                  `Successfully imported ${backupData.investments.length} investments!`,
+                  `Successfully imported ${backupData.investments.length} investments${hasDocuments ? ' and documents' : ''}!`,
                   [
                     {
                       text: 'OK',
@@ -155,7 +267,7 @@ const SettingsScreen = ({ navigation }) => {
                 );
               } catch (error) {
                 console.error('Import error:', error);
-                Alert.alert('Import Failed', 'Failed to import data. Please try again.');
+                Alert.alert('Import Failed', `Failed to import data: ${error.message}`);
               } finally {
                 setLoading(false);
               }
@@ -216,7 +328,7 @@ const SettingsScreen = ({ navigation }) => {
 
       <ScrollView
         style={styles.content}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 8 }}
       >
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Currency Settings</Text>

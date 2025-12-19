@@ -10,7 +10,9 @@
       "Bash(/tmp/final_portfolio_check.png)",
       "Bash(/opt/homebrew/opt/node@18/bin/npx expo export --platform android --clear)",
       "Bash(export JAVA_HOME=/opt/homebrew/opt/openjdk@17:*)",
-      "Bash(./gradlew assembleRelease:*)"
+      "Bash(./gradlew assembleRelease:*)",
+      "Bash(adb logcat:*)",
+      "Bash(adb devices:*)"
     ],
     "deny": [],
     "ask": []

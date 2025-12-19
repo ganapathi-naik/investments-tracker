@@ -5,11 +5,14 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert
+  Alert,
+  Linking
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Sharing from 'expo-sharing';
+import FileViewer from 'react-native-file-viewer';
 import { getInvestmentById, deleteInvestment } from '../utils/storage';
 import {
   getInvestedAmount,
@@ -20,15 +23,30 @@ import {
   formatPercentage
 } from '../utils/calculations';
 import { INVESTMENT_TYPES } from '../models/InvestmentTypes';
+import {
+  pickDocument,
+  saveDocument,
+  getInvestmentDocuments,
+  deleteDocument,
+  deleteInvestmentDocuments,
+  formatFileSize,
+  getFileType
+} from '../services/documentService';
 
 const InvestmentDetailScreen = ({ route, navigation }) => {
   const { investmentId } = route.params;
   const [investment, setInvestment] = useState(null);
+  const [documents, setDocuments] = useState([]);
+  const [isLoadingDocs, setIsLoadingDocs] = useState(false);
   const insets = useSafeAreaInsets();
 
   const loadData = async () => {
     const data = await getInvestmentById(investmentId);
     setInvestment(data);
+
+    // Load documents
+    const docs = await getInvestmentDocuments(investmentId);
+    setDocuments(docs);
   };
 
   useFocusEffect(
@@ -41,6 +59,69 @@ const InvestmentDetailScreen = ({ route, navigation }) => {
     navigation.navigate('EditInvestment', { investmentId });
   };
 
+  const handleAddDocument = async () => {
+    try {
+      setIsLoadingDocs(true);
+      const doc = await pickDocument();
+
+      if (doc) {
+        await saveDocument(investmentId, doc.uri, doc.name);
+        // Reload documents to get correct file size
+        const updatedDocs = await getInvestmentDocuments(investmentId);
+        setDocuments(updatedDocs);
+        Alert.alert('Success', 'Document attached successfully');
+      }
+    } catch (error) {
+      console.error('Error adding document:', error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      Alert.alert('Error', `Failed to attach document: ${error.message}`);
+    } finally {
+      setIsLoadingDocs(false);
+    }
+  };
+
+  const handleViewDocument = async (doc) => {
+    try {
+      await FileViewer.open(doc.uri, {
+        displayName: doc.name,
+        showOpenWithDialog: true,
+        showAppsSuggestions: true
+      });
+    } catch (error) {
+      console.error('Error viewing document:', error);
+      Alert.alert('Error', `Failed to open document: ${error.message}`);
+    }
+  };
+
+  const handleDeleteDocument = (doc) => {
+    Alert.alert(
+      'Delete Document',
+      `Are you sure you want to delete "${doc.name}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const success = await deleteDocument(investmentId, doc.id);
+              if (success) {
+                setDocuments(documents.filter(d => d.id !== doc.id));
+                Alert.alert('Success', 'Document deleted');
+              } else {
+                Alert.alert('Error', 'Failed to delete document');
+              }
+            } catch (error) {
+              console.error('Error deleting document:', error);
+              Alert.alert('Error', 'Failed to delete document');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const handleDelete = () => {
     Alert.alert(
       'Delete Investment',
@@ -51,6 +132,10 @@ const InvestmentDetailScreen = ({ route, navigation }) => {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
+            // Delete investment documents first
+            await deleteInvestmentDocuments(investmentId);
+
+            // Then delete the investment
             const success = await deleteInvestment(investmentId);
             if (success) {
               navigation.goBack();
@@ -84,7 +169,7 @@ const InvestmentDetailScreen = ({ route, navigation }) => {
     <View style={styles.container}>
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollViewContent}
+        contentContainerStyle={[styles.scrollViewContent, { paddingBottom: insets.bottom + 92 }]}
       >
         {/* Header Card */}
         <View style={[styles.headerCard, { borderLeftColor: type?.color || '#999' }]}>
@@ -154,10 +239,75 @@ const InvestmentDetailScreen = ({ route, navigation }) => {
             );
           })}
         </View>
+
+        {/* Documents Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Documents</Text>
+            <TouchableOpacity
+              style={styles.addDocButton}
+              onPress={handleAddDocument}
+              disabled={isLoadingDocs}
+            >
+              <Ionicons
+                name="add-circle"
+                size={24}
+                color={isLoadingDocs ? '#999' : '#4A90E2'}
+              />
+            </TouchableOpacity>
+          </View>
+
+          {documents.length === 0 ? (
+            <View style={styles.emptyDocuments}>
+              <Ionicons name="document-outline" size={48} color="#ccc" />
+              <Text style={styles.emptyDocumentsText}>No documents attached</Text>
+              <Text style={styles.emptyDocumentsHint}>
+                Tap + to attach certificates or documents
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.documentsList}>
+              {documents.map((doc) => (
+                <View key={doc.id} style={styles.documentItem}>
+                  <TouchableOpacity
+                    style={styles.documentInfo}
+                    onPress={() => handleViewDocument(doc)}
+                  >
+                    <Ionicons
+                      name={
+                        getFileType(doc.name) === 'pdf'
+                          ? 'document-text'
+                          : getFileType(doc.name) === 'image'
+                          ? 'image'
+                          : 'document'
+                      }
+                      size={32}
+                      color="#4A90E2"
+                    />
+                    <View style={styles.documentDetails}>
+                      <Text style={styles.documentName} numberOfLines={1}>
+                        {doc.name}
+                      </Text>
+                      <Text style={styles.documentMeta}>
+                        {formatFileSize(doc.size)} • {new Date(doc.addedDate).toLocaleDateString()}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.deleteDocButton}
+                    onPress={() => handleDeleteDocument(doc)}
+                  >
+                    <Ionicons name="trash-outline" size={20} color="#E74C3C" />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
       </ScrollView>
 
       {/* Actions - Fixed at Bottom */}
-      <View style={[styles.actionsContainer, { paddingBottom: insets.bottom + 15 }]}>
+      <View style={[styles.actionsContainer, { paddingBottom: insets.bottom + 8 }]}>
         <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
           <Ionicons name="pencil" size={20} color="#fff" />
           <Text style={styles.buttonText}>Edit</Text>
@@ -181,7 +331,6 @@ const styles = StyleSheet.create({
     flex: 1
   },
   scrollViewContent: {
-    paddingBottom: 100
   },
   loadingText: {
     textAlign: 'center',
@@ -324,6 +473,66 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600'
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15
+  },
+  addDocButton: {
+    padding: 4
+  },
+  emptyDocuments: {
+    alignItems: 'center',
+    paddingVertical: 30
+  },
+  emptyDocumentsText: {
+    fontSize: 16,
+    color: '#999',
+    marginTop: 12,
+    fontWeight: '500'
+  },
+  emptyDocumentsHint: {
+    fontSize: 14,
+    color: '#bbb',
+    marginTop: 4,
+    textAlign: 'center'
+  },
+  documentsList: {
+    gap: 12
+  },
+  documentItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0'
+  },
+  documentInfo: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12
+  },
+  documentDetails: {
+    flex: 1
+  },
+  documentName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+    marginBottom: 4
+  },
+  documentMeta: {
+    fontSize: 12,
+    color: '#999'
+  },
+  deleteDocButton: {
+    padding: 8,
+    marginLeft: 8
   }
 });
 

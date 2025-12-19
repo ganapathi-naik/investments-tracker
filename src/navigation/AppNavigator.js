@@ -15,7 +15,7 @@ import EditInvestmentScreen from '../screens/EditInvestmentScreen';
 import AddPostOfficeRDScreen from '../screens/AddPostOfficeRDScreen';
 import AddInvestmentFormScreen from '../screens/AddInvestmentFormScreen';
 import SettingsScreen from '../screens/SettingsScreen';
-import YearlyReturnsDebugScreen from '../screens/YearlyReturnsDebugScreen';
+import YearlyReturnsBreakdownScreen from '../screens/YearlyReturnsBreakdownScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -110,8 +110,8 @@ const AppNavigator = () => {
           options={{ headerShown: false }}
         />
         <Stack.Screen
-          name="YearlyReturnsDebug"
-          component={YearlyReturnsDebugScreen}
+          name="YearlyReturnsBreakdown"
+          component={YearlyReturnsBreakdownScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

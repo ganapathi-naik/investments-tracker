@@ -403,18 +403,96 @@ export const INVESTMENT_TYPES = {
     fields: [
       { name: 'policyName', label: 'Policy Name', type: 'text', required: true },
       { name: 'policyNumber', label: 'Policy Number', type: 'text', required: true },
+      {
+        name: 'policyType',
+        label: 'Policy Type',
+        type: 'select',
+        required: false,
+        options: [
+          { label: 'Term Insurance', value: 'term' },
+          { label: 'Endowment Policy', value: 'endowment' },
+          { label: 'Money Back Policy', value: 'moneyback' }
+        ]
+      },
       { name: 'premiumAmount', label: 'Premium Amount', type: 'number', required: true },
-      { name: 'coverageAmount', label: 'Coverage Amount', type: 'number', required: true },
+      {
+        name: 'premiumFrequency',
+        label: 'Premium Frequency',
+        type: 'select',
+        required: false,
+        options: [
+          { label: 'Monthly (Default)', value: 'monthly' },
+          { label: 'Quarterly', value: 'quarterly' },
+          { label: 'Half-Yearly', value: 'half-yearly' },
+          { label: 'Yearly', value: 'yearly' }
+        ]
+      },
+      { name: 'sumAssured', label: 'Sum Assured', type: 'number', required: true },
+      { name: 'bonusRate', label: 'Annual Bonus (per ₹1000)', type: 'number', required: false },
+      { name: 'finalBonus', label: 'Final Bonus (at maturity)', type: 'number', required: false },
+      { name: 'coverageAmount', label: 'Total Coverage/Maturity Amount', type: 'number', required: false },
       { name: 'startDate', label: 'Start Date', type: 'date', required: true },
       { name: 'maturityDate', label: 'Maturity Date', type: 'date', required: true },
       { name: 'notes', label: 'Notes', type: 'text', required: false }
     ],
-    displayFormat: (investment) => ({
-      quantity: 'Policy',
-      invested: investment.premiumAmount,
-      current: investment.premiumAmount,
-      returns: 0
-    })
+    displayFormat: (investment) => {
+      // Calculate total premiums paid based on frequency
+      const premium = investment.premiumAmount || 0;
+      const startDate = new Date(investment.startDate);
+      const maturityDate = new Date(investment.maturityDate);
+      const today = new Date();
+      const endDate = today < maturityDate ? today : maturityDate;
+      const freq = (investment.premiumFrequency || 'monthly').toLowerCase();
+
+      let totalPaid = 0;
+      if (freq === 'monthly') {
+        const months = Math.max(0, Math.round((endDate - startDate) / (1000 * 60 * 60 * 24 * 30.44)));
+        totalPaid = premium * months;
+      } else if (freq === 'quarterly') {
+        const quarters = Math.max(0, Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24 * 91.25)));
+        totalPaid = premium * quarters;
+      } else if (freq === 'half-yearly' || freq === 'halfyearly') {
+        const halfYears = Math.max(0, Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24 * 182.5)));
+        totalPaid = premium * halfYears;
+      } else if (freq === 'yearly' || freq === 'annually') {
+        const years = Math.max(0, Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24 * 365.25)));
+        totalPaid = premium * years;
+      }
+
+      const policyType = (investment.policyType || 'term').toLowerCase();
+      let currentValue = 0;
+
+      if (policyType === 'endowment' || policyType === 'moneyback') {
+        // For endowment policies, calculate with bonuses
+        const sumAssured = investment.sumAssured || investment.coverageAmount || 0;
+        const bonusRate = investment.bonusRate || 0;
+        const finalBonus = investment.finalBonus || 0;
+
+        // Calculate years completed (full years only for bonus)
+        const yearsCompleted = Math.floor((today - startDate) / (1000 * 60 * 60 * 24 * 365.25));
+
+        // Calculate accumulated bonuses: Bonus Rate × (Sum Assured / 1000) × Years Completed
+        const accumulatedBonus = bonusRate * (sumAssured / 1000) * yearsCompleted;
+
+        // Current value = Sum Assured + Accumulated Bonuses (no final bonus until maturity)
+        currentValue = sumAssured + accumulatedBonus;
+
+        // At maturity, add final bonus
+        if (today >= maturityDate) {
+          currentValue += finalBonus;
+        }
+      } else {
+        // For term insurance, use coverage amount
+        currentValue = investment.coverageAmount || 0;
+      }
+
+      return {
+        quantity: 'Policy',
+        invested: totalPaid,
+        current: currentValue,
+        returns: currentValue - totalPaid
+      };
+    }
   },
 
   POST_OFFICE_RD: {
@@ -505,15 +583,17 @@ export const INVESTMENT_TYPES = {
 
   POST_OFFICE_SAVINGS: {
     id: 'POST_OFFICE_SAVINGS',
-    name: 'Post Office Savings Account',
+    name: 'Savings Account',
     icon: 'wallet',
     color: '#F8B739',
     fields: [
       { name: 'investmentName', label: 'Investment Name', type: 'text', required: false },
+      { name: 'bankName', label: 'Bank Name', type: 'text', required: false },
       { name: 'balance', label: 'Current Balance', type: 'number', required: true },
       { name: 'interestRate', label: 'Interest Rate (%)', type: 'number', required: true },
       { name: 'accountNumber', label: 'Account Number', type: 'text', required: false },
       { name: 'openingDate', label: 'Account Opening Date', type: 'date', required: true },
+      { name: 'lastUpdated', label: 'Last Updated', type: 'date', required: true },
       { name: 'notes', label: 'Notes', type: 'text', required: false }
     ],
     displayFormat: (investment) => ({

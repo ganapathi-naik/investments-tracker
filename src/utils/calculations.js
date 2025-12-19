@@ -118,7 +118,43 @@ export const getInvestedAmount = (investment, usdToInrRate = 83.0) => {
       return investment.faceValue || 0;
 
     case 'INSURANCE':
-      return investment.premiumAmount || 0;
+      // Calculate total premiums paid based on frequency and time elapsed
+      const insPremium = investment.premiumAmount || 0;
+      const insStartDate = new Date(investment.startDate);
+      const insMaturityDate = new Date(investment.maturityDate);
+      const insToday = new Date();
+
+      // Use the earlier of today or maturity date
+      const insEndDate = insToday < insMaturityDate ? insToday : insMaturityDate;
+
+      // Get premium frequency (default to monthly)
+      const insFreq = (investment.premiumFrequency || 'monthly').toLowerCase();
+
+      let totalPremiumsPaid = 0;
+
+      if (insFreq === 'monthly') {
+        // Calculate months elapsed
+        const monthsElapsed = Math.max(0, Math.round((insEndDate - insStartDate) / (1000 * 60 * 60 * 24 * 30.44)));
+        totalPremiumsPaid = insPremium * monthsElapsed;
+      } else if (insFreq === 'quarterly') {
+        // Calculate quarters elapsed
+        const quartersElapsed = Math.max(0, Math.floor((insEndDate - insStartDate) / (1000 * 60 * 60 * 24 * 91.25)));
+        totalPremiumsPaid = insPremium * quartersElapsed;
+      } else if (insFreq === 'half-yearly' || insFreq === 'halfyearly') {
+        // Calculate half-years elapsed
+        const halfYearsElapsed = Math.max(0, Math.floor((insEndDate - insStartDate) / (1000 * 60 * 60 * 24 * 182.5)));
+        totalPremiumsPaid = insPremium * halfYearsElapsed;
+      } else if (insFreq === 'yearly' || insFreq === 'annually') {
+        // Calculate years elapsed
+        const yearsElapsed = Math.max(0, Math.floor((insEndDate - insStartDate) / (1000 * 60 * 60 * 24 * 365.25)));
+        totalPremiumsPaid = insPremium * yearsElapsed;
+      } else {
+        // Default to monthly
+        const monthsElapsed = Math.max(0, Math.round((insEndDate - insStartDate) / (1000 * 60 * 60 * 24 * 30.44)));
+        totalPremiumsPaid = insPremium * monthsElapsed;
+      }
+
+      return totalPremiumsPaid;
 
     case 'POST_OFFICE_SCSS':
     case 'POST_OFFICE_TD':
@@ -349,7 +385,37 @@ export const getCurrentValue = (investment, usdToInrRate = 83.0) => {
       return investment.currentValue || 0;
 
     case 'INSURANCE':
-      return investment.premiumAmount || 0;
+      // For insurance, calculate based on policy type
+      const policyType = (investment.policyType || 'term').toLowerCase();
+
+      if (policyType === 'endowment' || policyType === 'moneyback') {
+        // For endowment policies, calculate with bonuses
+        const sumAssured = investment.sumAssured || investment.coverageAmount || 0;
+        const bonusRate = investment.bonusRate || 0;
+        const finalBonus = investment.finalBonus || 0;
+        const insStartDate = new Date(investment.startDate);
+        const insMaturityDate = new Date(investment.maturityDate);
+        const insToday = new Date();
+
+        // Calculate years completed (full years only for bonus)
+        const yearsCompleted = Math.floor((insToday - insStartDate) / (1000 * 60 * 60 * 24 * 365.25));
+
+        // Calculate accumulated bonuses: Bonus Rate × (Sum Assured / 1000) × Years Completed
+        const accumulatedBonus = bonusRate * (sumAssured / 1000) * yearsCompleted;
+
+        // Current value = Sum Assured + Accumulated Bonuses
+        let currentValue = sumAssured + accumulatedBonus;
+
+        // At maturity, add final bonus
+        if (insToday >= insMaturityDate) {
+          currentValue += finalBonus;
+        }
+
+        return currentValue;
+      } else {
+        // For term insurance, use coverage amount
+        return investment.coverageAmount || 0;
+      }
 
     case 'POST_OFFICE_SCSS':
       const scssPrincipal = investment.principal || 0;
@@ -393,7 +459,7 @@ export const getCurrentValue = (investment, usdToInrRate = 83.0) => {
     case 'POST_OFFICE_KVP':
       const kvpPrincipal = investment.principal || 0;
       const kvpRate = (investment.interestRate || 0) / 100;
-      const kvpStartDate = new Date(investment.startDate);
+      const kvpPurchaseDate = new Date(investment.purchaseDate);
       const kvpMaturityDate = new Date(investment.maturityDate);
       const kvpToday = new Date();
 
@@ -401,7 +467,7 @@ export const getCurrentValue = (investment, usdToInrRate = 83.0) => {
       const kvpEndDate = kvpToday < kvpMaturityDate ? kvpToday : kvpMaturityDate;
 
       // Calculate years elapsed
-      const kvpYearsElapsed = Math.max(0, (kvpEndDate - kvpStartDate) / (1000 * 60 * 60 * 24 * 365.25));
+      const kvpYearsElapsed = Math.max(0, (kvpEndDate - kvpPurchaseDate) / (1000 * 60 * 60 * 24 * 365.25));
 
       // KVP uses annual compounding: A = P × (1 + r)^t
       const kvpCurrentValue = kvpPrincipal * Math.pow((1 + kvpRate), kvpYearsElapsed);
