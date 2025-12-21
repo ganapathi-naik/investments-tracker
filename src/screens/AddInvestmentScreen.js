@@ -8,9 +8,12 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { INVESTMENT_TYPES } from '../models/InvestmentTypes';
+import { useTheme } from '../utils/useTheme';
 
 const AddInvestmentScreen = ({ navigation }) => {
-  const insets = useSafeAreaInsets();
+    const { isDark, colors } = useTheme();
+  const styles = getStyles(colors);
+const insets = useSafeAreaInsets();
 
   const handleTypeSelect = (typeId) => {
     // Navigate to dedicated full-screen form for all investment types
@@ -52,16 +55,16 @@ const AddInvestmentScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5'
+    backgroundColor: colors.background
   },
   scrollView: {
     flex: 1
   },
   section: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.cardBackground,
     margin: 15,
     padding: 15,
     borderRadius: 10,
@@ -75,7 +78,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 15,
-    color: '#333'
+    color: colors.textPrimary
   },
   typeGrid: {
     flex: 1
@@ -85,9 +88,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: '#e0e0e0',
+    borderColor: colors.borderLight,
     borderLeftWidth: 6,
-    backgroundColor: '#fff'
+    backgroundColor: colors.cardBackground
   },
   typeCardContent: {
     flexDirection: 'row',
@@ -96,7 +99,7 @@ const styles = StyleSheet.create({
   },
   typeName: {
     fontSize: 16,
-    color: '#333',
+    color: colors.textPrimary,
     fontWeight: '500'
   }
 });

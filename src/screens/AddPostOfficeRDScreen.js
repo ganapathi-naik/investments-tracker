@@ -14,8 +14,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { addInvestment } from '../utils/storage';
 
+import { useTheme } from '../utils/useTheme';
+
 const AddPostOfficeRDScreen = ({ navigation }) => {
-  const insets = useSafeAreaInsets();
+    const { isDark, colors } = useTheme();
+  const styles = getStyles(colors);
+const insets = useSafeAreaInsets();
   const [formData, setFormData] = useState({
     monthlyDeposit: '',
     interestRate: '',
@@ -180,7 +184,7 @@ const AddPostOfficeRDScreen = ({ navigation }) => {
               value={formData.monthlyDeposit}
               onChangeText={(value) => handleInputChange('monthlyDeposit', value)}
               placeholder="Enter monthly deposit amount"
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.textTertiary}
               keyboardType="numeric"
             />
           </View>
@@ -194,7 +198,7 @@ const AddPostOfficeRDScreen = ({ navigation }) => {
               value={formData.interestRate}
               onChangeText={(value) => handleInputChange('interestRate', value)}
               placeholder="Enter interest rate"
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.textTertiary}
               keyboardType="numeric"
             />
           </View>
@@ -208,7 +212,7 @@ const AddPostOfficeRDScreen = ({ navigation }) => {
               value={formData.tenure}
               onChangeText={(value) => handleInputChange('tenure', value)}
               placeholder="Enter tenure in months"
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.textTertiary}
               keyboardType="numeric"
             />
             <Text style={styles.fieldHint}>
@@ -225,7 +229,7 @@ const AddPostOfficeRDScreen = ({ navigation }) => {
               value={formData.startDate}
               onChangeText={(value) => handleInputChange('startDate', value)}
               placeholder="YYYY-MM-DD"
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.textTertiary}
             />
           </View>
 
@@ -238,7 +242,7 @@ const AddPostOfficeRDScreen = ({ navigation }) => {
               value={formData.maturityDate}
               onChangeText={(value) => handleInputChange('maturityDate', value)}
               placeholder="YYYY-MM-DD (auto-calculated)"
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.textTertiary}
               editable={true}
             />
             <Text style={styles.fieldHint}>
@@ -253,7 +257,7 @@ const AddPostOfficeRDScreen = ({ navigation }) => {
               value={formData.accountNumber}
               onChangeText={(value) => handleInputChange('accountNumber', value)}
               placeholder="Enter account number (optional)"
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.textTertiary}
             />
           </View>
 
@@ -264,7 +268,7 @@ const AddPostOfficeRDScreen = ({ navigation }) => {
               value={formData.notes}
               onChangeText={(value) => handleInputChange('notes', value)}
               placeholder="Add any notes (optional)"
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.textTertiary}
               multiline
               numberOfLines={4}
             />
@@ -306,7 +310,7 @@ const AddPostOfficeRDScreen = ({ navigation }) => {
 
       <View style={[styles.saveButtonContainer, { paddingBottom: insets.bottom + 8 }]}>
         <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-          <Ionicons name="save" size={20} color="#fff" />
+          <Ionicons name="save" size={20} color={colors.buttonIcon} />
           <Text style={styles.saveButtonText}>Save Post Office RD</Text>
         </TouchableOpacity>
       </View>
@@ -314,10 +318,10 @@ const AddPostOfficeRDScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5'
+    backgroundColor: colors.background
   },
   scrollView: {
     flex: 1
@@ -325,7 +329,7 @@ const styles = StyleSheet.create({
   scrollViewContent: {
   },
   section: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.cardBackground,
     margin: 15,
     padding: 15,
     borderRadius: 10,
@@ -343,19 +347,19 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.textPrimary,
     marginLeft: 12
   },
   headerSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
     marginTop: 5
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 15,
-    color: '#333'
+    color: colors.textPrimary
   },
   formGroup: {
     marginBottom: 20
@@ -363,7 +367,7 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: colors.textPrimary,
     marginBottom: 8
   },
   required: {
@@ -371,11 +375,12 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: '#fff'
+    backgroundColor: colors.cardBackground,
+    color: colors.inputText
   },
   inputAutoFilled: {
     backgroundColor: '#f0f7ff'
@@ -386,16 +391,16 @@ const styles = StyleSheet.create({
   },
   fieldHint: {
     fontSize: 12,
-    color: '#999',
+    color: colors.textTertiary,
     marginTop: 5,
     fontStyle: 'italic'
   },
   projectionCard: {
-    backgroundColor: '#f9f9f9',
+    backgroundColor: colors.emptyContainer,
     padding: 15,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#e0e0e0'
+    borderColor: colors.borderLight
   },
   projectionRow: {
     flexDirection: 'row',
@@ -410,17 +415,17 @@ const styles = StyleSheet.create({
   },
   projectionLabel: {
     fontSize: 14,
-    color: '#666'
+    color: colors.textSecondary
   },
   projectionValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333'
+    color: colors.textPrimary
   },
   projectionLabelTotal: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333'
+    color: colors.textPrimary
   },
   projectionValueTotal: {
     fontSize: 16,
@@ -437,7 +442,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0'
+    borderTopColor: colors.borderLight
   },
   returnPercentage: {
     fontSize: 14,
@@ -450,10 +455,10 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#fff',
+    backgroundColor: colors.cardBackground,
     padding: 15,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: colors.borderLight,
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
@@ -470,7 +475,7 @@ const styles = StyleSheet.create({
     gap: 8
   },
   saveButtonText: {
-    color: '#fff',
+    color: colors.buttonText,
     fontSize: 16,
     fontWeight: '600'
   }

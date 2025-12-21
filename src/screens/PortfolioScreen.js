@@ -21,9 +21,12 @@ import {
   formatPercentage
 } from '../utils/calculations';
 import { INVESTMENT_TYPES } from '../models/InvestmentTypes';
+import { useTheme } from '../utils/useTheme';
 
 // Memoized Investment Card Component for better performance
 const InvestmentCard = React.memo(({ investment, usdToInrRate, onPress }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const type = INVESTMENT_TYPES[investment.type];
   const invested = getInvestedAmount(investment, usdToInrRate);
   const current = getCurrentValue(investment, usdToInrRate);
@@ -105,7 +108,7 @@ const InvestmentCard = React.memo(({ investment, usdToInrRate, onPress }) => {
           <View
             style={[
               styles.typeIndicator,
-              { backgroundColor: type?.color || '#999' }
+              { backgroundColor: type?.color || colors.textTertiary }
             ]}
           />
           <View>
@@ -117,7 +120,7 @@ const InvestmentCard = React.memo(({ investment, usdToInrRate, onPress }) => {
             </Text>
           </View>
         </View>
-        <Ionicons name="chevron-forward" size={20} color="#999" />
+        <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
       </View>
 
       <View style={styles.cardBody}>
@@ -155,7 +158,9 @@ const InvestmentCard = React.memo(({ investment, usdToInrRate, onPress }) => {
 InvestmentCard.displayName = 'InvestmentCard';
 
 const PortfolioScreen = ({ navigation }) => {
-  const [investments, setInvestments] = useState([]);
+    const { isDark, colors } = useTheme();
+  const styles = getStyles(colors);
+const [investments, setInvestments] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -295,19 +300,19 @@ const PortfolioScreen = ({ navigation }) => {
               style={styles.headerButton}
               onPress={() => navigation.navigate('AddInvestment')}
             >
-              <Ionicons name="add-circle-outline" size={24} color="#fff" />
+              <Ionicons name="add-circle-outline" size={24} color={colors.cardBackground} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.headerButton}
               onPress={() => navigation.navigate('Settings')}
             >
-              <Ionicons name="settings-outline" size={24} color="#fff" />
+              <Ionicons name="settings-outline" size={24} color={colors.cardBackground} />
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4A90E2" />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Loading your investments...</Text>
         </View>
       </View>
@@ -323,30 +328,30 @@ const PortfolioScreen = ({ navigation }) => {
             style={styles.headerButton}
             onPress={() => navigation.navigate('AddInvestment')}
           >
-            <Ionicons name="add-circle-outline" size={24} color="#fff" />
+            <Ionicons name="add-circle-outline" size={24} color={colors.iconColor} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerButton}
             onPress={() => navigation.navigate('Settings')}
           >
-            <Ionicons name="settings-outline" size={24} color="#fff" />
+            <Ionicons name="settings-outline" size={24} color={colors.iconColor} />
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Search Box */}
       <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
+        <Ionicons name="search" size={20} color={colors.textTertiary} style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
           placeholder="Search investments..."
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholderTextColor="#999"
+          placeholderTextColor={colors.textTertiary}
         />
         {searchQuery.length > 0 && (
           <TouchableOpacity onPress={() => setSearchQuery('')}>
-            <Ionicons name="close-circle" size={20} color="#999" />
+            <Ionicons name="close-circle" size={20} color={colors.textTertiary} />
           </TouchableOpacity>
         )}
         {filteredInvestments.length > 0 && (
@@ -357,7 +362,7 @@ const PortfolioScreen = ({ navigation }) => {
             <Ionicons
               name={areAllCollapsed() ? "expand-outline" : "contract-outline"}
               size={20}
-              color="#4A90E2"
+              color={colors.textPrimary}
             />
           </TouchableOpacity>
         )}
@@ -383,7 +388,7 @@ const PortfolioScreen = ({ navigation }) => {
                 <TouchableOpacity
                   style={[
                     styles.groupHeader,
-                    { borderLeftColor: type?.color || '#4A90E2' }
+                    { borderLeftColor: type?.color || colors.headerBackground }
                   ]}
                   onPress={() => toggleGroup(typeId)}
                   activeOpacity={0.7}
@@ -392,13 +397,13 @@ const PortfolioScreen = ({ navigation }) => {
                     <Ionicons
                       name={isExpanded ? "chevron-down" : "chevron-forward"}
                       size={20}
-                      color="#666"
+                      color={colors.textSecondary}
                       style={styles.chevronIcon}
                     />
                     <View
                       style={[
                         styles.groupIndicator,
-                        { backgroundColor: type?.color || '#999' }
+                        { backgroundColor: type?.color || colors.textTertiary }
                       ]}
                     />
                     <Text style={styles.groupTitle}>
@@ -432,7 +437,7 @@ const PortfolioScreen = ({ navigation }) => {
           })
         ) : (
           <View style={styles.emptyContainer}>
-            <Ionicons name="briefcase-outline" size={64} color="#ccc" />
+            <Ionicons name="briefcase-outline" size={64} color={colors.textTertiary} />
             <Text style={styles.emptyText}>
               {searchQuery ? 'No investments match your search' : 'No investments found'}
             </Text>
@@ -451,13 +456,13 @@ const PortfolioScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5'
+    backgroundColor: colors.background
   },
   header: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: colors.headerBackground,
     padding: 20,
     paddingTop: 50,
     flexDirection: 'row',
@@ -467,7 +472,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff'
+    color: colors.iconColor
   },
   headerButtons: {
     flexDirection: 'row',
@@ -481,22 +486,20 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5'
+    backgroundColor: colors.background
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#666',
+    color: colors.textSecondary,
     fontWeight: '500'
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.cardBackground,
     paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0'
+    paddingVertical: 10
   },
   searchIcon: {
     marginRight: 10
@@ -504,7 +507,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#333',
+    color: colors.textPrimary,
     padding: 0
   },
   collapseButton: {
@@ -522,7 +525,7 @@ const styles = StyleSheet.create({
     marginBottom: 5
   },
   groupHeader: {
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
     paddingHorizontal: 10,
     paddingVertical: 10,
     marginHorizontal: 10,
@@ -549,7 +552,7 @@ const styles = StyleSheet.create({
   groupTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: colors.textPrimary,
     flex: 1
   },
   groupStats: {
@@ -559,7 +562,7 @@ const styles = StyleSheet.create({
   groupStatsText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#333'
+    color: colors.textPrimary
   },
   groupReturnsText: {
     fontSize: 12,
@@ -567,7 +570,7 @@ const styles = StyleSheet.create({
     marginTop: 2
   },
   investmentCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.cardBackground,
     marginHorizontal: 10,
     marginVertical: 5,
     borderRadius: 10,
@@ -585,7 +588,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0'
+    borderBottomColor: colors.borderLight
   },
   cardLeft: {
     flexDirection: 'row',
@@ -601,12 +604,12 @@ const styles = StyleSheet.create({
   investmentName: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.textPrimary,
     marginBottom: 3
   },
   investmentQuantity: {
     fontSize: 12,
-    color: '#999'
+    color: colors.textTertiary
   },
   cardBody: {
     gap: 8
@@ -620,24 +623,24 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 11,
-    color: '#666',
+    color: colors.textSecondary,
     marginBottom: 3
   },
   statValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333'
+    color: colors.textPrimary
   },
   returnsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0'
+    borderTopColor: colors.borderLight
   },
   returnsLabel: {
     fontSize: 12,
-    color: '#666',
+    color: colors.textSecondary,
     marginRight: 6
   },
   returnsValue: {
@@ -663,18 +666,18 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#999',
+    color: colors.textTertiary,
     marginTop: 16,
     marginBottom: 24
   },
   addButton: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: colors.headerBackground,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8
   },
   addButtonText: {
-    color: '#fff',
+    color: colors.cardBackground,
     fontSize: 16,
     fontWeight: '600'
   }

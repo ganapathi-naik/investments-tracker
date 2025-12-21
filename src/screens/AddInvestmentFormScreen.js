@@ -15,10 +15,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { addInvestment } from '../utils/storage';
 import { INVESTMENT_TYPES } from '../models/InvestmentTypes';
+import { useTheme } from '../utils/useTheme';
 import { scheduleMaturityNotifications } from '../services/notificationService';
 
 const AddInvestmentFormScreen = ({ navigation, route }) => {
-  const { investmentType } = route.params;
+    const { isDark, colors } = useTheme();
+  const styles = getStyles(colors);
+const { investmentType } = route.params;
   const type = useMemo(() => INVESTMENT_TYPES[investmentType], [investmentType]);
   const insets = useSafeAreaInsets();
 
@@ -87,7 +90,7 @@ const AddInvestmentFormScreen = ({ navigation, route }) => {
         <View style={styles.section}>
           <View style={styles.header}>
             <View style={[styles.iconCircle, { backgroundColor: type.color }]}>
-              <Ionicons name="document-text" size={24} color="#fff" />
+              <Ionicons name="document-text" size={24} color={colors.cardBackground} />
             </View>
             <Text style={styles.headerTitle}>{type.name}</Text>
           </View>
@@ -111,7 +114,7 @@ const AddInvestmentFormScreen = ({ navigation, route }) => {
                   value={formData[field.name] || ''}
                   onChangeText={(value) => handleInputChange(field.name, value)}
                   placeholder={`Enter ${field.label.toLowerCase()}`}
-                  placeholderTextColor="#999"
+                  placeholderTextColor={colors.textTertiary}
                   keyboardType={field.type === 'number' ? 'numeric' : 'default'}
                 />
               ) : field.type === 'date' ? (
@@ -120,7 +123,7 @@ const AddInvestmentFormScreen = ({ navigation, route }) => {
                   value={formData[field.name] || ''}
                   onChangeText={(value) => handleInputChange(field.name, value)}
                   placeholder="YYYY-MM-DD"
-                  placeholderTextColor="#999"
+                  placeholderTextColor={colors.textTertiary}
                 />
               ) : field.type === 'select' ? (
                 <View style={styles.pickerContainer}>
@@ -128,7 +131,7 @@ const AddInvestmentFormScreen = ({ navigation, route }) => {
                     selectedValue={formData[field.name] || field.options[0].value}
                     onValueChange={(value) => handleInputChange(field.name, value)}
                     style={styles.picker}
-                    dropdownIconColor="#333"
+                    dropdownIconColor={colors.textPrimary}
                     mode="dropdown"
                   >
                     {field.options.map((option) => (
@@ -136,8 +139,8 @@ const AddInvestmentFormScreen = ({ navigation, route }) => {
                         key={option.value}
                         label={option.label}
                         value={option.value}
-                        color="#000000"
-                        style={{ backgroundColor: '#FFFFFF' }}
+                        color={colors.textPrimary}
+                        style={{ backgroundColor: colors.cardBackground }}
                       />
                     ))}
                   </Picker>
@@ -150,7 +153,7 @@ const AddInvestmentFormScreen = ({ navigation, route }) => {
 
       <View style={[styles.saveButtonContainer, { paddingBottom: insets.bottom + 8 }]}>
         <TouchableOpacity style={[styles.saveButton, { backgroundColor: type.color }]} onPress={handleSave}>
-          <Ionicons name="save" size={20} color="#fff" />
+          <Ionicons name="save" size={20} color={colors.buttonIcon} />
           <Text style={styles.saveButtonText}>Save Investment</Text>
         </TouchableOpacity>
       </View>
@@ -158,10 +161,10 @@ const AddInvestmentFormScreen = ({ navigation, route }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5'
+    backgroundColor: colors.background
   },
   scrollView: {
     flex: 1
@@ -169,7 +172,7 @@ const styles = StyleSheet.create({
   scrollViewContent: {
   },
   section: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.cardBackground,
     margin: 15,
     padding: 15,
     borderRadius: 10,
@@ -195,19 +198,19 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.textPrimary,
     flex: 1
   },
   headerSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
     marginTop: 5
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 15,
-    color: '#333'
+    color: colors.textPrimary
   },
   formGroup: {
     marginBottom: 20
@@ -215,7 +218,7 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: colors.textPrimary,
     marginBottom: 8
   },
   required: {
@@ -223,33 +226,34 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: '#fff'
+    backgroundColor: colors.cardBackground,
+    color: colors.inputText
   },
   pickerContainer: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
     borderRadius: 8,
-    backgroundColor: '#fff',
+    backgroundColor: colors.cardBackground,
     overflow: 'hidden',
     justifyContent: 'center'
   },
   picker: {
     height: 56,
-    color: '#333'
+    color: colors.textPrimary
   },
   saveButtonContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#fff',
+    backgroundColor: colors.cardBackground,
     padding: 15,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: colors.borderLight,
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
@@ -265,7 +269,7 @@ const styles = StyleSheet.create({
     gap: 8
   },
   saveButtonText: {
-    color: '#fff',
+    color: colors.buttonText,
     fontSize: 16,
     fontWeight: '600'
   }

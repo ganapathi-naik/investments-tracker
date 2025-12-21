@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../utils/useTheme';
 
 // Import screens
 import DashboardScreen from '../screens/DashboardScreen';
@@ -23,6 +24,7 @@ const Stack = createStackNavigator();
 // Tab Navigator for main screens
 const MainTabs = () => {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
 
   return (
     <Tab.Navigator
@@ -40,13 +42,16 @@ const MainTabs = () => {
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#4A90E2',
-        tabBarInactiveTintColor: 'gray',
+        tabBarActiveTintColor: colors.tabActiveColor,
+        tabBarInactiveTintColor: colors.tabInactiveColor,
         headerShown: false,
         tabBarStyle: {
+          backgroundColor: colors.cardBackground,
           paddingBottom: insets.bottom + 8,
           paddingTop: 8,
-          height: 70 + insets.bottom
+          height: 70 + insets.bottom,
+          borderTopWidth: 1,
+          borderTopColor: colors.borderLight
         }
       })}
     >
@@ -59,14 +64,16 @@ const MainTabs = () => {
 
 // Main Stack Navigator
 const AppNavigator = () => {
+  const { colors } = useTheme();
+
   return (
     <NavigationContainer>
       <Stack.Navigator
         screenOptions={{
           headerStyle: {
-            backgroundColor: '#4A90E2',
+            backgroundColor: colors.headerBackground,
           },
-          headerTintColor: '#fff',
+          headerTintColor: colors.iconColor,
           headerTitleStyle: {
             fontWeight: 'bold',
           },

@@ -24,8 +24,12 @@ import {
   getTotalDocumentCount
 } from '../services/documentService';
 
+import { useTheme } from '../utils/useTheme';
+
 const SettingsScreen = ({ navigation }) => {
-  const insets = useSafeAreaInsets();
+    const { isDark, colors } = useTheme();
+  const styles = getStyles(colors);
+const insets = useSafeAreaInsets();
   const [usdToInrRate, setUsdToInrRate] = useState('83.0');
   const [loading, setLoading] = useState(false);
 
@@ -321,7 +325,7 @@ const SettingsScreen = ({ navigation }) => {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={colors.iconColor} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Settings</Text>
       </View>
@@ -346,7 +350,7 @@ const SettingsScreen = ({ navigation }) => {
                 onChangeText={setUsdToInrRate}
                 keyboardType="decimal-pad"
                 placeholder="83.0"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.textTertiary}
               />
               <Text style={styles.inputSuffix}>per $1</Text>
             </View>
@@ -382,7 +386,7 @@ const SettingsScreen = ({ navigation }) => {
           <Text style={styles.sectionTitle}>Data Backup & Restore</Text>
           <View style={styles.backupCard}>
             <View style={styles.backupInfo}>
-              <Ionicons name="cloud-download-outline" size={24} color="#4A90E2" />
+              <Ionicons name="cloud-download-outline" size={24} color={colors.textPrimary} />
               <Text style={styles.backupText}>
                 Export your investment data to a backup file that you can save and restore later.
               </Text>
@@ -393,7 +397,7 @@ const SettingsScreen = ({ navigation }) => {
                 onPress={handleExportData}
                 disabled={loading}
               >
-                <Ionicons name="download-outline" size={20} color="#fff" />
+                <Ionicons name="download-outline" size={20} color={colors.buttonIcon} />
                 <Text style={styles.backupButtonText}>Export Data</Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -401,7 +405,7 @@ const SettingsScreen = ({ navigation }) => {
                 onPress={handleImportData}
                 disabled={loading}
               >
-                <Ionicons name="cloud-upload-outline" size={20} color="#fff" />
+                <Ionicons name="cloud-upload-outline" size={20} color={colors.buttonIcon} />
                 <Text style={styles.backupButtonText}>Import Data</Text>
               </TouchableOpacity>
             </View>
@@ -422,13 +426,13 @@ const SettingsScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5'
+    backgroundColor: colors.background
   },
   header: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: colors.headerBackground,
     paddingBottom: 20,
     paddingHorizontal: 20,
     flexDirection: 'row',
@@ -440,7 +444,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff'
+    color: colors.iconColor
   },
   content: {
     flex: 1
@@ -452,13 +456,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#666',
+    color: colors.textSecondary,
     marginBottom: 10,
     textTransform: 'uppercase',
     letterSpacing: 0.5
   },
   settingCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.cardBackground,
     borderRadius: 10,
     padding: 20,
     elevation: 2,
@@ -470,12 +474,12 @@ const styles = StyleSheet.create({
   settingLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: colors.textPrimary,
     marginBottom: 8
   },
   settingDescription: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
     lineHeight: 20,
     marginBottom: 20
   },
@@ -483,37 +487,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
     borderRadius: 8,
     paddingHorizontal: 15,
-    backgroundColor: '#f9f9f9'
+    backgroundColor: colors.emptyContainer
   },
   inputPrefix: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: colors.textPrimary,
     marginRight: 8
   },
   input: {
     flex: 1,
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: colors.textPrimary,
     paddingVertical: 12
   },
   inputSuffix: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
     marginLeft: 8
   },
   exampleText: {
     fontSize: 12,
-    color: '#999',
+    color: colors.textTertiary,
     marginTop: 8,
     fontStyle: 'italic'
   },
   infoCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.cardBackground,
     borderRadius: 10,
     padding: 20,
     elevation: 2,
@@ -529,11 +533,11 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 14,
-    color: '#333',
+    color: colors.textPrimary,
     marginLeft: 10
   },
   saveButton: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: colors.headerBackground,
     borderRadius: 10,
     padding: 16,
     margin: 15,
@@ -545,15 +549,15 @@ const styles = StyleSheet.create({
     shadowRadius: 4
   },
   saveButtonDisabled: {
-    backgroundColor: '#999'
+    backgroundColor: colors.textTertiary
   },
   saveButtonText: {
-    color: '#fff',
+    color: colors.buttonText,
     fontSize: 16,
     fontWeight: '600'
   },
   backupCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.cardBackground,
     borderRadius: 10,
     padding: 20,
     elevation: 2,
@@ -570,7 +574,7 @@ const styles = StyleSheet.create({
   backupText: {
     flex: 1,
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
     lineHeight: 20,
     marginLeft: 12
   },
@@ -594,13 +598,13 @@ const styles = StyleSheet.create({
     shadowRadius: 2
   },
   importButton: {
-    backgroundColor: '#4A90E2'
+    backgroundColor: colors.headerBackground
   },
   backupButtonDisabled: {
-    backgroundColor: '#999'
+    backgroundColor: colors.textTertiary
   },
   backupButtonText: {
-    color: '#fff',
+    color: colors.buttonText,
     fontSize: 14,
     fontWeight: '600'
   }

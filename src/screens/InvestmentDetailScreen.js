@@ -23,6 +23,7 @@ import {
   formatPercentage
 } from '../utils/calculations';
 import { INVESTMENT_TYPES } from '../models/InvestmentTypes';
+import { useTheme } from '../utils/useTheme';
 import {
   pickDocument,
   saveDocument,
@@ -34,7 +35,9 @@ import {
 } from '../services/documentService';
 
 const InvestmentDetailScreen = ({ route, navigation }) => {
-  const { investmentId } = route.params;
+    const { isDark, colors } = useTheme();
+  const styles = getStyles(colors);
+const { investmentId } = route.params;
   const [investment, setInvestment] = useState(null);
   const [documents, setDocuments] = useState([]);
   const [isLoadingDocs, setIsLoadingDocs] = useState(false);
@@ -172,7 +175,7 @@ const InvestmentDetailScreen = ({ route, navigation }) => {
         contentContainerStyle={[styles.scrollViewContent, { paddingBottom: insets.bottom + 92 }]}
       >
         {/* Header Card */}
-        <View style={[styles.headerCard, { borderLeftColor: type?.color || '#999' }]}>
+        <View style={[styles.headerCard, { borderLeftColor: type?.color || colors.textTertiary }]}>
           <Text style={styles.typeName}>{type?.name || investment.type}</Text>
           <Text style={styles.quantity}>
             {typeof displayData?.quantity === 'string'
@@ -252,14 +255,14 @@ const InvestmentDetailScreen = ({ route, navigation }) => {
               <Ionicons
                 name="add-circle"
                 size={24}
-                color={isLoadingDocs ? '#999' : '#4A90E2'}
+                color={isLoadingDocs ? colors.textTertiary : colors.primary}
               />
             </TouchableOpacity>
           </View>
 
           {documents.length === 0 ? (
             <View style={styles.emptyDocuments}>
-              <Ionicons name="document-outline" size={48} color="#ccc" />
+              <Ionicons name="document-outline" size={48} color={colors.textTertiary} />
               <Text style={styles.emptyDocumentsText}>No documents attached</Text>
               <Text style={styles.emptyDocumentsHint}>
                 Tap + to attach certificates or documents
@@ -282,7 +285,7 @@ const InvestmentDetailScreen = ({ route, navigation }) => {
                           : 'document'
                       }
                       size={32}
-                      color="#4A90E2"
+                      color={colors.primary}
                     />
                     <View style={styles.documentDetails}>
                       <Text style={styles.documentName} numberOfLines={1}>
@@ -309,12 +312,12 @@ const InvestmentDetailScreen = ({ route, navigation }) => {
       {/* Actions - Fixed at Bottom */}
       <View style={[styles.actionsContainer, { paddingBottom: insets.bottom + 8 }]}>
         <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
-          <Ionicons name="pencil" size={20} color="#fff" />
+          <Ionicons name="pencil" size={20} color={colors.buttonIcon} />
           <Text style={styles.buttonText}>Edit</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-          <Ionicons name="trash" size={20} color="#fff" />
+          <Ionicons name="trash" size={20} color={colors.buttonIcon} />
           <Text style={styles.buttonText}>Delete</Text>
         </TouchableOpacity>
       </View>
@@ -322,10 +325,10 @@ const InvestmentDetailScreen = ({ route, navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5'
+    backgroundColor: colors.background
   },
   scrollView: {
     flex: 1
@@ -336,10 +339,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 50,
     fontSize: 16,
-    color: '#999'
+    color: colors.textTertiary
   },
   headerCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.cardBackground,
     margin: 15,
     padding: 20,
     borderRadius: 10,
@@ -353,15 +356,15 @@ const styles = StyleSheet.create({
   typeName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.textPrimary,
     marginBottom: 8
   },
   quantity: {
     fontSize: 16,
-    color: '#666'
+    color: colors.textSecondary
   },
   section: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.cardBackground,
     margin: 15,
     marginTop: 0,
     padding: 20,
@@ -376,7 +379,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 15,
-    color: '#333'
+    color: colors.textPrimary
   },
   summaryRow: {
     flexDirection: 'row',
@@ -384,16 +387,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0'
+    borderBottomColor: colors.borderLight
   },
   summaryLabel: {
     fontSize: 14,
-    color: '#666'
+    color: colors.textSecondary
   },
   summaryValue: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333'
+    color: colors.textPrimary
   },
   returnsContainer: {
     alignItems: 'flex-end'
@@ -418,17 +421,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0'
+    borderBottomColor: colors.borderLight
   },
   detailLabel: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
     flex: 1
   },
   detailValue: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#333',
+    color: colors.textPrimary,
     flex: 1,
     textAlign: 'right'
   },
@@ -438,10 +441,10 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: colors.cardBackground,
     padding: 15,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: colors.borderLight,
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
@@ -451,7 +454,7 @@ const styles = StyleSheet.create({
   },
   editButton: {
     flex: 1,
-    backgroundColor: '#4A90E2',
+    backgroundColor: colors.headerBackground,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -470,7 +473,7 @@ const styles = StyleSheet.create({
     gap: 8
   },
   buttonText: {
-    color: '#fff',
+    color: colors.buttonText,
     fontSize: 16,
     fontWeight: '600'
   },
@@ -489,7 +492,7 @@ const styles = StyleSheet.create({
   },
   emptyDocumentsText: {
     fontSize: 16,
-    color: '#999',
+    color: colors.textTertiary,
     marginTop: 12,
     fontWeight: '500'
   },
@@ -505,11 +508,11 @@ const styles = StyleSheet.create({
   documentItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f9f9f9',
+    backgroundColor: colors.emptyContainer,
     padding: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#e0e0e0'
+    borderColor: colors.borderLight
   },
   documentInfo: {
     flex: 1,
@@ -523,12 +526,12 @@ const styles = StyleSheet.create({
   documentName: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#333',
+    color: colors.textPrimary,
     marginBottom: 4
   },
   documentMeta: {
     fontSize: 12,
-    color: '#999'
+    color: colors.textTertiary
   },
   deleteDocButton: {
     padding: 8,

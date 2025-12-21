@@ -23,8 +23,11 @@ import {
 } from '../utils/calculations';
 import { INVESTMENT_TYPES } from '../models/InvestmentTypes';
 import { scheduleAllNotifications } from '../services/notificationService';
+import { useTheme } from '../utils/useTheme';
 
 const DashboardScreen = ({ navigation }) => {
+  const { isDark, colors } = useTheme();
+  const styles = getStyles(colors);
   const [investments, setInvestments] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [usdToInrRate, setUsdToInrRate] = useState(83.0);
@@ -85,13 +88,13 @@ const DashboardScreen = ({ navigation }) => {
             style={styles.headerButton}
             onPress={() => navigation.navigate('AddInvestment')}
           >
-            <Ionicons name="add-circle-outline" size={24} color="#fff" />
+            <Ionicons name="add-circle-outline" size={24} color={colors.iconColor} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerButton}
             onPress={() => navigation.navigate('Settings')}
           >
-            <Ionicons name="settings-outline" size={24} color="#fff" />
+            <Ionicons name="settings-outline" size={24} color={colors.iconColor} />
           </TouchableOpacity>
         </View>
       </View>
@@ -152,7 +155,7 @@ const DashboardScreen = ({ navigation }) => {
                     <View
                       style={[
                         styles.allocationColor,
-                        { backgroundColor: type?.color || '#999' }
+                        { backgroundColor: type?.color || colors.textTertiary }
                       ]}
                     />
                     <View>
@@ -181,7 +184,7 @@ const DashboardScreen = ({ navigation }) => {
             style={styles.actionButton}
             onPress={() => navigation.navigate('AddInvestment')}
           >
-            <Ionicons name="add-circle" size={24} color="#4A90E2" />
+            <Ionicons name="add-circle" size={24} color={colors.primary} />
             <Text style={styles.actionButtonText}>Add New Investment</Text>
           </TouchableOpacity>
         </View>
@@ -192,19 +195,19 @@ const DashboardScreen = ({ navigation }) => {
         style={styles.fab}
         onPress={() => navigation.navigate('AddInvestment')}
       >
-        <Ionicons name="add" size={32} color="#fff" />
+        <Ionicons name="add" size={32} color={colors.iconColor} />
       </TouchableOpacity>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5'
+    backgroundColor: colors.background
   },
   header: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: colors.headerBackground,
     padding: 20,
     paddingTop: 50,
     flexDirection: 'row',
@@ -214,7 +217,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff'
+    color: colors.iconColor
   },
   headerButtons: {
     flexDirection: 'row',
@@ -237,7 +240,7 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.cardBackground,
     borderRadius: 10,
     padding: 15,
     elevation: 2,
@@ -264,18 +267,19 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 12,
-    color: '#666',
+    color: colors.textSecondary,
     marginBottom: 5
   },
   summaryValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333'
+    color: colors.textPrimary
   },
   percentageText: {
     fontSize: 14,
     marginTop: 5,
-    fontWeight: '600'
+    fontWeight: '600',
+    color: colors.textSecondary
   },
   positiveReturns: {
     color: '#27AE60'
@@ -285,7 +289,7 @@ const styles = StyleSheet.create({
   },
   section: {
     margin: 10,
-    backgroundColor: '#fff',
+    backgroundColor: colors.cardBackground,
     borderRadius: 10,
     padding: 15,
     elevation: 2,
@@ -298,7 +302,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 15,
-    color: '#333'
+    color: colors.textPrimary
   },
   allocationItem: {
     flexDirection: 'row',
@@ -306,7 +310,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0'
+    borderBottomColor: colors.borderLight
   },
   allocationLeft: {
     flexDirection: 'row',
@@ -322,11 +326,11 @@ const styles = StyleSheet.create({
   allocationName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333'
+    color: colors.textPrimary
   },
   allocationCount: {
     fontSize: 12,
-    color: '#666',
+    color: colors.textSecondary,
     marginTop: 2
   },
   allocationRight: {
@@ -335,16 +339,16 @@ const styles = StyleSheet.create({
   allocationValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333'
+    color: colors.textPrimary
   },
   allocationPercentage: {
     fontSize: 12,
-    color: '#666',
+    color: colors.textSecondary,
     marginTop: 2
   },
   emptyText: {
     textAlign: 'center',
-    color: '#999',
+    color: colors.textTertiary,
     fontSize: 14,
     paddingVertical: 20
   },
@@ -352,15 +356,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 15,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: colors.borderVeryLight,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#e0e0e0'
+    borderColor: colors.border
   },
   actionButtonText: {
     fontSize: 16,
     marginLeft: 10,
-    color: '#4A90E2',
+    color: colors.primary,
     fontWeight: '600'
   },
   fab: {
@@ -370,7 +374,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#4A90E2',
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,

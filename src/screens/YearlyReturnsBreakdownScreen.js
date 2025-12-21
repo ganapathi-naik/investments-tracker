@@ -13,8 +13,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { loadInvestments } from '../utils/storage';
 import { formatINR } from '../utils/calculations';
 import { INVESTMENT_TYPES } from '../models/InvestmentTypes';
+import { useTheme } from '../utils/useTheme';
 
 const YearlyReturnsBreakdownScreen = ({ navigation, route }) => {
+  const { isDark, colors } = useTheme();
+  const styles = getStyles(colors);
   const insets = useSafeAreaInsets();
   const [investments, setInvestments] = useState([]);
   const [selectedYear, setSelectedYear] = useState(
@@ -332,7 +335,7 @@ const YearlyReturnsBreakdownScreen = ({ navigation, route }) => {
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={colors.iconColor} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Yearly Returns Breakdown</Text>
         <View style={{ width: 24 }} />
@@ -351,7 +354,7 @@ const YearlyReturnsBreakdownScreen = ({ navigation, route }) => {
             keyboardType="numeric"
             maxLength={4}
             placeholder="YYYY"
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.textTertiary}
           />
         </View>
 
@@ -393,13 +396,13 @@ const YearlyReturnsBreakdownScreen = ({ navigation, route }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5'
+    backgroundColor: colors.background
   },
   header: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: colors.headerBackground,
     padding: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -408,7 +411,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#fff'
+    color: colors.iconColor
   },
   scrollView: {
     flex: 1
@@ -416,7 +419,7 @@ const styles = StyleSheet.create({
   scrollViewContent: {
   },
   yearInputCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.cardBackground,
     margin: 10,
     borderRadius: 10,
     padding: 20,
@@ -430,18 +433,19 @@ const styles = StyleSheet.create({
   },
   yearLabel: {
     fontSize: 16,
-    color: '#333',
+    color: colors.textPrimary,
     marginRight: 15,
     fontWeight: '600'
   },
   yearInput: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
     width: 100,
-    backgroundColor: '#fff'
+    backgroundColor: colors.cardBackground,
+    color: colors.inputText
   },
   totalCard: {
     backgroundColor: '#27AE60',
@@ -465,7 +469,7 @@ const styles = StyleSheet.create({
     color: '#fff'
   },
   breakdownCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.cardBackground,
     margin: 10,
     borderRadius: 10,
     padding: 20,
@@ -478,12 +482,12 @@ const styles = StyleSheet.create({
   breakdownTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.textPrimary,
     marginBottom: 15
   },
   breakdownItem: {
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: colors.borderLight,
     paddingVertical: 12,
     marginBottom: 8
   },
@@ -504,12 +508,12 @@ const styles = StyleSheet.create({
   breakdownName: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#333',
+    color: colors.textPrimary,
     marginBottom: 2
   },
   breakdownType: {
     fontSize: 12,
-    color: '#666'
+    color: colors.textSecondary
   },
   breakdownAmount: {
     fontSize: 16,
@@ -518,18 +522,18 @@ const styles = StyleSheet.create({
   },
   breakdownCalculation: {
     fontSize: 12,
-    color: '#999',
+    color: colors.textTertiary,
     fontStyle: 'italic',
     marginLeft: 20
   },
   noDataText: {
     fontSize: 14,
-    color: '#999',
+    color: colors.textTertiary,
     textAlign: 'center',
     paddingVertical: 20
   },
   emptyCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.cardBackground,
     margin: 10,
     borderRadius: 10,
     padding: 40,
@@ -542,7 +546,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    color: '#999'
+    color: colors.textTertiary
   }
 });
 

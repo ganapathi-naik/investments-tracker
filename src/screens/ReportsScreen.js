@@ -22,10 +22,13 @@ import {
 } from '../utils/calculations';
 import { INVESTMENT_TYPES } from '../models/InvestmentTypes';
 import { calculateYearlyReturnsComparison, getLastNYears, getPerformanceHighlights, calculateMonthlyReturns } from '../utils/analytics';
+import { useTheme } from '../utils/useTheme';
 
 const { width } = Dimensions.get('window');
 
 const ReportsScreen = () => {
+  const { isDark, colors } = useTheme();
+  const styles = getStyles(colors);
   const navigation = useNavigation();
   const [investments, setInvestments] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -459,13 +462,13 @@ const ReportsScreen = () => {
             style={styles.headerButton}
             onPress={() => navigation.navigate('AddInvestment')}
           >
-            <Ionicons name="add-circle-outline" size={24} color="#fff" />
+            <Ionicons name="add-circle-outline" size={24} color={colors.iconColor} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerButton}
             onPress={() => navigation.navigate('Settings')}
           >
-            <Ionicons name="settings-outline" size={24} color="#fff" />
+            <Ionicons name="settings-outline" size={24} color={colors.iconColor} />
           </TouchableOpacity>
         </View>
       </View>
@@ -507,7 +510,7 @@ const ReportsScreen = () => {
               style={styles.debugButton}
               onPress={() => navigation.navigate('YearlyReturnsBreakdown', { selectedYear })}
             >
-              <Ionicons name="information-circle-outline" size={24} color="#4A90E2" />
+              <Ionicons name="information-circle-outline" size={24} color={colors.textPrimary} />
             </TouchableOpacity>
           </View>
           <View style={styles.yearInputContainer}>
@@ -519,7 +522,7 @@ const ReportsScreen = () => {
               keyboardType="numeric"
               maxLength={4}
               placeholder="YYYY"
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.textTertiary}
             />
           </View>
           {selectedYear.length === 4 && !isNaN(selectedYear) && parseInt(selectedYear) >= 1900 && parseInt(selectedYear) <= 2100 ? (
@@ -561,7 +564,7 @@ const ReportsScreen = () => {
                         styles.comparisonBar,
                         {
                           width: `${barWidth}%`,
-                          backgroundColor: yearData.year === selectedYear ? '#4A90E2' : '#27AE60'
+                          backgroundColor: yearData.year === selectedYear ? '#5BA3F5' : '#27AE60'
                         }
                       ]}
                     />
@@ -618,8 +621,8 @@ const ReportsScreen = () => {
                           styles.monthlyBar,
                           {
                             height: isFutureMonth ? '5%' : `${Math.max(barHeight, 5)}%`,
-                            backgroundColor: isCurrentMonth ? '#4A90E2' :
-                                           isFutureMonth ? '#E0E0E0' : '#27AE60',
+                            backgroundColor: isCurrentMonth ? '#5BA3F5' :
+                                           isFutureMonth ? colors.disabledBackground : '#27AE60',
                             opacity: isFutureMonth ? 0.3 : 1
                           }
                         ]}
@@ -728,7 +731,7 @@ const ReportsScreen = () => {
               <Ionicons
                 name={areAllCollapsed() ? "expand-outline" : "contract-outline"}
                 size={20}
-                color="#4A90E2"
+                color={colors.textPrimary}
               />
             </TouchableOpacity>
           </View>
@@ -747,13 +750,13 @@ const ReportsScreen = () => {
                 <Ionicons
                   name={isExpanded ? "chevron-down" : "chevron-forward"}
                   size={20}
-                  color="#666"
+                  color={colors.textSecondary}
                   style={styles.chevronIcon}
                 />
                 <View
                   style={[
                     styles.typeIndicator,
-                    { backgroundColor: report.type?.color || '#999' }
+                    { backgroundColor: report.type?.color || colors.textTertiary }
                   ]}
                 />
                 <View style={styles.reportHeaderText}>
@@ -806,7 +809,7 @@ const ReportsScreen = () => {
                   styles.allocationBar,
                   {
                     width: `${report.allocationPercentage}%`,
-                    backgroundColor: report.type?.color || '#999'
+                    backgroundColor: report.type?.color || colors.textTertiary
                   }
                 ]}
               />
@@ -857,13 +860,13 @@ const ReportsScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5'
+    backgroundColor: colors.background
   },
   header: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: colors.headerBackground,
     padding: 20,
     paddingTop: 50,
     flexDirection: 'row',
@@ -873,7 +876,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff'
+    color: colors.iconColor
   },
   headerButtons: {
     flexDirection: 'row',
@@ -890,7 +893,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20
   },
   summaryCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.cardBackground,
     margin: 10,
     borderRadius: 10,
     padding: 20,
@@ -903,7 +906,7 @@ const styles = StyleSheet.create({
   summaryTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333'
+    color: colors.textPrimary
   },
   yearlyTitleRow: {
     flexDirection: 'row',
@@ -921,12 +924,12 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 14,
-    color: '#666'
+    color: colors.textSecondary
   },
   summaryValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333'
+    color: colors.textPrimary
   },
   yearInputContainer: {
     flexDirection: 'row',
@@ -936,24 +939,25 @@ const styles = StyleSheet.create({
   },
   yearLabel: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
     marginRight: 10
   },
   yearInput: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
     borderRadius: 8,
     padding: 10,
     fontSize: 16,
     width: 100,
-    backgroundColor: '#fff'
+    backgroundColor: colors.cardBackground,
+    color: colors.inputText
   },
   yearlyReturnsRow: {
     marginBottom: 10
   },
   yearlyReturnsLabel: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
     marginBottom: 5
   },
   yearlyReturnsValue: {
@@ -962,7 +966,7 @@ const styles = StyleSheet.create({
   },
   yearlyReturnsNote: {
     fontSize: 11,
-    color: '#999',
+    color: colors.textTertiary,
     fontStyle: 'italic',
     marginTop: 5
   },
@@ -974,7 +978,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     marginHorizontal: 10,
     marginTop: 10,
-    backgroundColor: '#fff',
+    backgroundColor: colors.cardBackground,
     borderRadius: 8,
     elevation: 1,
     shadowColor: '#000',
@@ -985,13 +989,13 @@ const styles = StyleSheet.create({
   typeReportsTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333'
+    color: colors.textPrimary
   },
   collapseButton: {
     padding: 5
   },
   reportCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.cardBackground,
     margin: 10,
     borderRadius: 10,
     padding: 15,
@@ -1007,7 +1011,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0'
+    borderBottomColor: colors.borderLight
   },
   chevronIcon: {
     marginRight: 8
@@ -1024,11 +1028,11 @@ const styles = StyleSheet.create({
   reportTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333'
+    color: colors.textPrimary
   },
   reportSubtitle: {
     fontSize: 12,
-    color: '#666',
+    color: colors.textSecondary,
     marginTop: 2
   },
   reportStats: {
@@ -1041,13 +1045,13 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 12,
-    color: '#666',
+    color: colors.textSecondary,
     marginBottom: 4
   },
   statValue: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333'
+    color: colors.textPrimary
   },
   percentageText: {
     fontSize: 12,
@@ -1062,7 +1066,7 @@ const styles = StyleSheet.create({
   },
   allocationBarContainer: {
     height: 8,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.borderLight,
     borderRadius: 4,
     overflow: 'hidden',
     marginBottom: 15
@@ -1073,13 +1077,13 @@ const styles = StyleSheet.create({
   },
   investmentList: {
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: colors.borderLight,
     paddingTop: 10
   },
   investmentListTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: colors.textSecondary,
     marginBottom: 10
   },
   investmentItem: {
@@ -1087,7 +1091,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#f8f8f8'
+    borderBottomColor: colors.borderVeryLight
   },
   investmentItemLeft: {
     flex: 1
@@ -1095,11 +1099,11 @@ const styles = StyleSheet.create({
   investmentItemName: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#333'
+    color: colors.textPrimary
   },
   investmentItemQuantity: {
     fontSize: 12,
-    color: '#999',
+    color: colors.textTertiary,
     marginTop: 2
   },
   investmentItemRight: {
@@ -1108,7 +1112,7 @@ const styles = StyleSheet.create({
   investmentItemValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333'
+    color: colors.textPrimary
   },
   investmentItemReturns: {
     fontSize: 12,
@@ -1121,16 +1125,16 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#999'
+    color: colors.textTertiary
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#ccc',
+    color: colors.textTertiary,
     marginTop: 8
   },
   comparisonSubtitle: {
     fontSize: 12,
-    color: '#999',
+    color: colors.textTertiary,
     marginBottom: 15,
     fontStyle: 'italic'
   },
@@ -1142,13 +1146,13 @@ const styles = StyleSheet.create({
   comparisonYear: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: colors.textPrimary,
     width: 50
   },
   comparisonBarContainer: {
     flex: 1,
     height: 24,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.borderLight,
     borderRadius: 4,
     marginHorizontal: 10,
     overflow: 'hidden'
@@ -1161,7 +1165,7 @@ const styles = StyleSheet.create({
   comparisonValue: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#333',
+    color: colors.textPrimary,
     width: 80,
     textAlign: 'right'
   },
@@ -1177,12 +1181,12 @@ const styles = StyleSheet.create({
   performanceSectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333'
+    color: colors.textPrimary
   },
   performanceItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f9f9f9',
+    backgroundColor: colors.emptyContainer,
     padding: 12,
     borderRadius: 8,
     marginBottom: 8,
@@ -1207,12 +1211,12 @@ const styles = StyleSheet.create({
   performanceName: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#333',
+    color: colors.textPrimary,
     marginBottom: 2
   },
   performanceQuantity: {
     fontSize: 12,
-    color: '#999'
+    color: colors.textTertiary
   },
   performanceStats: {
     alignItems: 'flex-end'
@@ -1255,12 +1259,12 @@ const styles = StyleSheet.create({
   monthlyLabel: {
     fontSize: 9,
     fontWeight: '600',
-    color: '#666',
+    color: colors.textSecondary,
     marginBottom: 4,
     textAlign: 'center'
   },
   currentMonthLabel: {
-    color: '#4A90E2',
+    color: '#5BA3F5',
     fontWeight: 'bold'
   },
   monthlyValue: {
